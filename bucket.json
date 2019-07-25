@@ -181,13 +181,6 @@
          "ETag": "\"4f50f28f13761db294e1c29f5abeaa90\"",
          "Size": "8153002",
          "StorageClass": "STANDARD"
-      },
-      {
-         "Key": "index.html",
-         "LastModified": "2015-12-10T20:07:10.000Z",
-         "ETag": "\"0a0a71d28229db9a3ddd27b9c9ca1f10\"",
-         "Size": "6430",
-         "StorageClass": "STANDARD"
       }
    ]
 }
