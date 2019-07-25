@@ -1,0 +1,193 @@
+{
+   "Contents": [
+      {
+         "Key": "2010-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T22:33:31.000Z",
+         "ETag": "\"59d208f733a40a9aa2e4fec6ef81c4dc\"",
+         "Size": "2407441",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2011-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T22:45:30.000Z",
+         "ETag": "\"07b5258efe196313772099fcb90ced19-2\"",
+         "Size": "25334200",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2012-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T22:55:27.000Z",
+         "ETag": "\"dfe4546f4408473b09510eb05a5768c9-3\"",
+         "Size": "43460762",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2013-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T23:16:26.000Z",
+         "ETag": "\"530091921e6a7028b0ddc0b624331b99-4\"",
+         "Size": "56479856",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2014-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T23:29:51.000Z",
+         "ETag": "\"2364e568cc542fa74423a7998b6b1751-4\"",
+         "Size": "66499218",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2015-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-16T02:04:26.000Z",
+         "ETag": "\"7e98e8fd88d1d8a14770473bb9dbd714-5\"",
+         "Size": "73591430",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2016-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-16T02:27:02.000Z",
+         "ETag": "\"de8b4ab611c8b63eaf9f02758a1d2107-5\"",
+         "Size": "78230874",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "2017-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-03-15T22:25:30.000Z",
+         "ETag": "\"06735cd7f69e5e0fb1bd848b8c29b28d-6\"",
+         "Size": "89576218",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201801-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-04-30T16:01:09.000Z",
+         "ETag": "\"3e34c884d12542b2d27b6c6d104f3c1b\"",
+         "Size": "3870111",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201802-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-05-11T20:47:35.000Z",
+         "ETag": "\"d122ecbfc29d8697ef042ac5e9cd31f1\"",
+         "Size": "4182314",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201803-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-05-11T20:47:42.000Z",
+         "ETag": "\"df0854d8595c378415335a19895266e5\"",
+         "Size": "5430788",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201804-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-05-11T20:47:48.000Z",
+         "ETag": "\"6ca7a782c78ecd37749cceb305a5caf4\"",
+         "Size": "7476085",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201805-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-06-08T15:28:00.000Z",
+         "ETag": "\"25df5aa3388de18e0b01c353d2d7f462\"",
+         "Size": "8514114",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201806-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-07-16T19:10:25.000Z",
+         "ETag": "\"e963e061374e91ae46c4f9969456ece2\"",
+         "Size": "8943105",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201807-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-08-07T19:25:26.000Z",
+         "ETag": "\"46616bb73ecf8da10d673017b424fa2d\"",
+         "Size": "9168541",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201808-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-09-06T18:41:28.000Z",
+         "ETag": "\"6f4839794409c64cc46c7cf282693e13\"",
+         "Size": "9211917",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201809-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-10-03T18:47:17.000Z",
+         "ETag": "\"128de72d937d5991882a487b234b22ed\"",
+         "Size": "7463431",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201810-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-11-07T19:49:27.000Z",
+         "ETag": "\"9badc0def5815cbf060a98a46b6560bc\"",
+         "Size": "7883276",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201811-capitalbikeshare-tripdata.zip",
+         "LastModified": "2018-12-04T16:25:59.000Z",
+         "ETag": "\"80cd2168e26159bdebf65fa79257a649\"",
+         "Size": "5102902",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201812-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-01-08T20:51:43.000Z",
+         "ETag": "\"7aa423626792bdff86b573f750a1d7a1\"",
+         "Size": "3674121",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201901-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-02-11T14:41:29.000Z",
+         "ETag": "\"f745df3b9263fbe764981d222fb27976\"",
+         "Size": "3496833",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201902-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-03-04T16:25:19.000Z",
+         "ETag": "\"d65645f34fb1568a63053babceba0030\"",
+         "Size": "3669647",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201903-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-04-15T18:37:09.000Z",
+         "ETag": "\"b7974774932e2f273c0dcf00083df710\"",
+         "Size": "5861879",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201904-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-05-06T19:08:08.000Z",
+         "ETag": "\"9becfb734c4594362d4dfb58fb8a07b9\"",
+         "Size": "8008919",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201905-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-06-11T19:36:12.000Z",
+         "ETag": "\"6ad615a372163c5e549181ab110f3348\"",
+         "Size": "7837266",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "201906-capitalbikeshare-tripdata.zip",
+         "LastModified": "2019-07-15T17:55:20.000Z",
+         "ETag": "\"4f50f28f13761db294e1c29f5abeaa90\"",
+         "Size": "8153002",
+         "StorageClass": "STANDARD"
+      },
+      {
+         "Key": "index.html",
+         "LastModified": "2015-12-10T20:07:10.000Z",
+         "ETag": "\"0a0a71d28229db9a3ddd27b9c9ca1f10\"",
+         "Size": "6430",
+         "StorageClass": "STANDARD"
+      }
+   ]
+}
