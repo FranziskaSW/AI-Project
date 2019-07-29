@@ -272,9 +272,9 @@ if __name__ == "__main__":
     enddate = datetime(year=2019, month=7, day=1, hour=0, minute=0)
 
     print('--------tripdata------')
-    # data = load_data()
-    # data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
-    data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
+    data = load_data()
+    data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
+    # data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
 
     print('-------stations--------')
     stations, stations_rough, cluster_size = get_stations()
