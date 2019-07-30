@@ -36,33 +36,35 @@ class Tree:
 
     def recursive_build(self, records_df, order, path, depth):
         """Recursive helper to build the tree"""
-        if not order:
-            return Node(self.decide_leaf(records_df, path), path, depth)
-        else:
-            data = order[0]
+        data = order[0]
+        if data != GOAL:
             if not path:
-                node = Node(data, depth)
+                node = Node(data, depth=depth)
             else:
                 node = Node(data, path, depth)
             children = []
-            if data != GOAL:
-                for val in records_df[data].unique():
-                    remaining = copy.deepcopy(order[1:])
-                    new_path = copy.deepcopy(path + [(data, val)])
-                    children.append(self.recursive_build(records_df,
-                                                         remaining, new_path,
-                                                         depth+1))
-                node.add_children(children)
-            return node
+            for val in records_df[data].unique():
+                new_data = records_df[records_df[data] == val]
+                records_df = records_df[records_df[data] != val]
+                remaining = copy.deepcopy(order[1:])
+                new_path = copy.deepcopy(path + [(data, val)])
+
+                children.append(self.recursive_build(new_data,
+                                                     remaining, new_path,
+                                                     depth+1))
+            node.add_children(children)
+        else:
+            node = Node(self.decide_leaf(records_df), path, depth=depth)
+        return node
 
     def orginize_nodes(self, records_df):
         """Orginize the dictionary according to a certain logic"""
         attributes = list(records_df.columns)
         return attributes
 
-    def decide_leaf(self, records_df, path):
+    def decide_leaf(self, records_df):
         """Decide the value of the leaf based on the records"""
-        return "None"
+        return records_df[GOAL].value_counts().argmax()
 
 
 def generate_graph(tree):
