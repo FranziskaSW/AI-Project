@@ -3,11 +3,12 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
+import os
 
 
 # GOAL = "pickups"
 GOAL = "Goal"
-THRESHOLD = 0.2
 
 
 class Node:
@@ -27,7 +28,10 @@ class Node:
 class Tree:
     def __init__(self, records_df):
         """creates the tree based on a dictionary of attributes and options"""
-        self.root = self.create_tree(records_df)
+        if records_df is not None:
+            self.root = self.create_tree(records_df)
+        else:
+            self.root = Node(None)
 
     def __del__(self):
         del self.root
@@ -35,15 +39,17 @@ class Tree:
     def create_tree(self, records_df):
         """creates the tree and returns the root"""
         attributes = list(records_df.columns)
+        attributes.remove(GOAL)
         return self.recursive_build(records_df, attributes, [], 0)
 
     def recursive_build(self, records_df, attributes, path, depth):
         """Recursive helper to build the tree"""
         attribute = self.get_next_attribute(attributes, records_df)
-        while len(records_df[attribute].value_counts()) == 1 and \
-                len(attributes) > 1:
+        while attribute and len(records_df[attribute].value_counts()) == 1:
             attributes.remove(attribute)
             attribute = self.get_next_attribute(attributes, records_df)
+        if not attribute:
+            attribute = GOAL
         if attribute != GOAL:
             if not path:
                 node = Node(attribute, depth=depth)
@@ -55,7 +61,6 @@ class Tree:
                 new_path = copy.deepcopy(path + [(attribute, val)])
                 records_df = records_df[records_df[attribute] != val]
                 remaining = copy.deepcopy(attributes)
-                remaining.remove(attribute)
                 children.append(self.recursive_build(new_data,
                                                      remaining, new_path,
                                                      depth+1))
@@ -66,7 +71,10 @@ class Tree:
 
     def get_next_attribute(self, attribute_list, records_df):
         """returns the next attribute"""
-        return attribute_list[0]
+        if attribute_list:
+            return attribute_list[0]
+        else:
+            return None
 
     def decide_leaf(self, records_df):
         """Decide the value of the leaf based on the records"""
@@ -76,32 +84,90 @@ class Tree:
         """Prunes the tree based on a threshold"""
         pass
 
-    def get_val(self, row):
+    def get_val(self, df_row):
         """Gets the relevant node based on the row"""
-        pass
+        node = self.root
+        while node:
+            prev_node = node
+            if not len(node.children):
+                return node.data
+            if node.data not in df_row.columns:
+                return None
+            children = prev_node.children
+            for child in children:
+                if child.choices[-1][1] == df_row.iloc[0][prev_node.data]:
+                    node = child
+                    break
+                else:
+                    node = None
+        return None
 
-    def save_tree(self, output_name):
+    def save_tree(self, output_path):
         """Saves the tree"""
-        pass
+        with open(output_path, 'wb') as file:
+            pickle.dump(self, file)
 
-    def load_tree(self, output_name):
+    def load_tree(self, path):
         """Saves the tree"""
-        pass
+        with open(path, 'rb') as file:
+            node = pickle.load(file)
+        self.root = node.root
 
 
 class EntropyTree(Tree):
     def get_next_attribute(self, attribute_list, records_df):
-        entropy = dict()
-        for attribute in attribute_list:
-            p = records_df[attribute].value_counts() / len(records_df)
-            entropy[attribute] = np.sum(p * np.log2(1 / p))
-
-        return min(entropy, key=entropy.get)
+        """returns the attribute with the minimum entropy"""
+        entropy = calc_entropy(attribute_list, records_df)
+        if len(entropy):
+            return min(entropy, key=entropy.get)
+        return None
 
 
 class InformationGainTree(Tree):
     def get_next_attribute(self, attribute_list, records_df):
-        pass
+        """Returns the attribute with the highest information gain"""
+        info_gain = information_gain(attribute_list, records_df)
+        if len(info_gain):
+            return max(info_gain, key=info_gain.get)
+        return None
+
+
+class InformationRatioTree(Tree):
+    def get_next_attribute(self, attribute_list, records_df):
+        """Returns the attribute with the highest information gain ratio"""
+        info_gain = information_gain(attribute_list, records_df)
+        info_gain_ratio = dict()
+        for attribute in attribute_list:
+            p = records_df[attribute].value_counts() / len(records_df)
+            int_value = np.sum(p * np.log2(1 / p))
+            info_gain_ratio[attribute] = info_gain[attribute] / int_value
+        if len(info_gain_ratio):
+            return max(info_gain_ratio, key=info_gain_ratio.get)
+        return None
+
+
+def calc_entropy(attribute_list, records_df):
+    """Returns the entropy dictionary"""
+    entropy = dict()
+    for attribute in attribute_list:
+        p = records_df[attribute].value_counts() / len(records_df)
+        entropy[attribute] = np.sum(p * np.log2(1 / p))
+    return entropy
+
+
+def information_gain(attribute_list, records_df):
+    """Returns a dictionary of the information gain"""
+    goal_entropy = calc_entropy([GOAL], records_df)[GOAL]
+    info_gain = dict()
+    for attribute in attribute_list:
+        remaining_entropy = 0
+        for val in records_df[attribute].unique():
+            relevant = records_df[records_df[attribute] == val]
+            p = relevant[GOAL].value_counts() / len(relevant)
+            remaining_entropy += np.sum(p * np.log2(1 / p) * len(relevant)
+                                        / len(records_df))
+        info_gain[attribute] = goal_entropy - remaining_entropy
+    return info_gain
 
 
 def generate_graph(tree):
@@ -157,9 +223,21 @@ def draw_tree(G):
 
 if __name__ == "__main__":
     data = pd.read_csv("dataa.csv")
-    # data = pd.read_csv("pickups_2019.csv")
-    # test = Tree(data)
-    test = EntropyTree(data)
-    test = InformationGainTree(data)
-    G = generate_graph(test)
-    # todo: add pruning, information gain
+    # tree = Tree(data)
+    # G = generate_graph(tree)
+    # entropy = EntropyTree(data)
+    # G = generate_graph(entropy)
+    # info_gain = InformationGainTree(data)
+    # G = generate_graph(info_gain)
+    information_gain_ratio = InformationRatioTree(data)
+    G = generate_graph(information_gain_ratio)
+
+    # path = os.getcwd()
+    # sample = data.sample(1)
+    # test.load_tree(path + "/trees/test.txt")
+    # print(sample)
+    # print(test.get_val(sample))
+    # test.save_tree(path + "/trees/test.txt")
+
+    # todo: add pruning
+    # todo: randomForest - train trees based on different examples?
