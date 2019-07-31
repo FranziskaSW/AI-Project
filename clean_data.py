@@ -47,8 +47,11 @@ def get_stations(path = cwd + '/data/Capital_Bike_Share_Locations.csv', grid_siz
     stations_rough = stations.merge(new_stat, how='left',
                                     left_on=['lat', 'lon'],
                                     right_on=['lat', 'lon'])
-    cluster_size = stations_rough.groupby(by='id_y').count().reset_index()[['id_y', 'id_x']]
-    cluster_size.rename(columns={'id_y': 'cluster_id', 'id_x': 'cluster_size'}, inplace=True)
+
+    stations_rough.rename(columns={'id_y': 'cluster_id'}, inplace=True)
+
+    cluster_size = stations_rough.groupby(by='cluster_id').count().reset_index()[['cluster_id', 'id_x']]
+    cluster_size.rename(columns={'id_x': 'cluster_size'}, inplace=True)
 
     return stations, stations_rough, cluster_size
 
@@ -101,7 +104,7 @@ def yearly_data_starttime(data, year):
 def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
     data = data[['starttime', 'Start station number']]
     data_s = stations_rough.merge(data, how='right', left_on='id_x', right_on='Start station number')[
-        ['starttime', 'id_y', 'lat', 'lon']]
+        ['starttime', 'cluster_id', 'lat', 'lon']]
 
     # within next 90 minutes will have x pickups at station
     time = startdate
@@ -120,22 +123,27 @@ def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluste
         if time.year == current_year + 1:
 
             # final save of data from last year
-            pickups.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-            pickups.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+            cols = list(pickups_combined.columns)
+            cols.remove('pickups')
+            cols.append('pickups')
+            pickups_combined = pickups_combined[cols]
+
+            pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
+            pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
 
             # get data for next year
             current_year += 1
             print('--------------- next year, use data for ', current_year)
             data_year = yearly_data_starttime(data_s, current_year)
 
-            pickups = pd.read_pickle(cwd + '/data/pickups_empty.pkl')
+            pickups_combined = pd.read_pickle(cwd + '/data/pickups_empty.pkl')
 
         pickups = data_year[(data_year.starttime >= time) &
-                         (data_year.starttime < time + delta)].groupby(['id_y', 'lat', 'lon']).count()  # Member type
+                         (data_year.starttime < time + delta)].groupby(['cluster_id', 'lat', 'lon']).count()  # Member type
 
         # multi-index to single index and rename columns
         pickups = pickups.reset_index()
-        pickups.rename(columns={'id_y': 'cluster_id', 'starttime': 'pickups'}, inplace=True)
+        pickups.rename(columns={'starttime': 'pickups'}, inplace=True)
 
         # cluster size
         pickups = pickups.merge(cluster_size, how='left')
@@ -166,14 +174,20 @@ def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluste
 
         if not (step%50):
             print(step, ' save csv and pkl')
-            pickups.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-            pickups.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+            pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
+            pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
 
         time += delta
         step += 1
     # final save of data
-    pickups.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-    pickups.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+
+    cols = list(pickups_combined.columns)
+    cols.remove('pickups')
+    cols.append('pickups')
+    pickups_combined = pickups_combined[cols]
+
+    pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
+    pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
 
     return pickups_combined
 
@@ -188,8 +202,7 @@ def yearly_data_endtime(data, year):
 
 def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
     data = data[['endtime', 'End station number']]
-    data_s = stations_rough.merge(data, how='right', left_on='id_x', right_on='End station number')[
-        ['endtime', 'id_y', 'lat', 'lon']]
+    data_s = stations_rough.merge(data, how='right', left_on='id_x', right_on='End station number')[['endtime', 'cluster_id', 'lat', 'lon']]
 
     # within next 90 minutes will have x returns at station
     time = startdate
@@ -201,28 +214,35 @@ def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluste
     first_year = startdate.year
     current_year = first_year
     data_year = yearly_data_endtime(data_s, first_year)
+    print(data_year.columns)
 
     while time < enddate:
         print(time, time + delta, current_year)
 
         if time.year == current_year + 1:
             # final save of data from last year
-            returns.to_pickle(cwd+'/data/returns_'+str(current_year)+'.pkl')
-            returns.to_csv(cwd+'/data/returns_'+str(current_year)+'.csv')
+            cols = list(returns_combined.columns)
+            cols.remove('returns')
+            cols.append('returns')
+            returns_combined = returns_combined[cols]
+
+            returns_combined.to_pickle(cwd+'/data/returns_'+str(current_year)+'.pkl')
+            returns_combined.to_csv(cwd+'/data/returns_'+str(current_year)+'.csv')
 
             # get data for next year
             current_year += 1
             print('--------------- next year, use data for ', current_year)
             data_year = yearly_data_endtime(data_s, current_year)
 
-            returns = pd.read_pickle(cwd+'/data/returns_empty.pkl')
+            returns_combined = pd.read_pickle(cwd+'/data/returns_empty.pkl')
 
         returns = data_year[(data_year.endtime >= time) &
-                         (data_year.endtime < time + delta)].groupby(['id_y', 'lat', 'lon']).count()  # Member type
+                         (data_year.endtime < time + delta)].groupby(['cluster_id', 'lat', 'lon']).count()  # Member type
 
         # multi-index to single index and rename columns
         returns = returns.reset_index()
-        returns.rename(columns={'id_y': 'cluster_id', 'endtime': 'returns'}, inplace=True)
+        returns.rename(columns={'endtime': 'returns'}, inplace=True)
+        # fill in clusters that didn't have returns as 0 returns
 
         # cluster size
         returns = returns.merge(cluster_size, how='left')
@@ -231,6 +251,7 @@ def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluste
         returns['weekday'] = time.weekday()
         returns['time'] = time.time()
         returns['month'] = time.month
+        returns['datetime'] = time
 
         # weather data
         try:
@@ -245,23 +266,31 @@ def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluste
         returns['humidity'] = current_weather['humidity']
         returns = returns.merge(weather_phrases, how='left')
         returns = returns.drop(columns='phrase')
+        returns = stations_rough[['cluster_id']].merge(returns, how='left')
 
         returns_combined = pd.concat([returns_combined, returns], ignore_index=True)
 
-        # returns_empty = pd.DataFrame(columns=list(returns.columns))
-        # returns_empty.to_pickle(cwd+'/data/returns_empty.pkl')
+        returns_empty = pd.DataFrame(columns=list(returns.columns))
+        returns_empty.to_pickle(cwd+'/data/returns_empty.pkl')
 
         if not (step%50):
             print(step, ' save csv and pkl')
-            returns.to_pickle(cwd+'/data/returns_'+str(current_year)+'.pkl')
-            returns.to_csv(cwd+'/data/returns_'+str(current_year)+'.csv')
+            returns_combined.to_pickle(cwd+'/data/returns_'+str(current_year)+'.pkl')
+            returns_combined.to_csv(cwd+'/data/returns_'+str(current_year)+'.csv')
 
         time += delta
         step += 1
 
     # final save of data
-    returns.to_pickle(cwd + '/data/returns_' + str(current_year) + '.pkl')
-    returns.to_csv(cwd + '/data/returns_' + str(current_year) + '.csv')
+
+    cols = list(returns_combined.columns)
+    cols.remove('returns')
+    cols.append('returns')
+    returns_combined = returns_combined[cols]
+
+
+    returns_combined.to_pickle(cwd + '/data/returns_' + str(current_year) + '.pkl')
+    returns_combined.to_csv(cwd + '/data/returns_' + str(current_year) + '.csv')
 
     return returns_combined
 
@@ -269,12 +298,12 @@ def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluste
 if __name__ == "__main__":
 
     startdate = datetime(year=2015, month=1, day=1, hour=0, minute=0)
-    enddate = datetime(year=2019, month=7, day=1, hour=0, minute=0)
+    enddate = datetime(year=2018, month=1, day=1, hour=0, minute=0)
 
     print('--------tripdata------')
-    data = load_data()
-    data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
-    # data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
+    # data = load_data()
+    # data.to_pickle(cwd+'/data/tripdata_2010-2014.pkl')
+    data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
 
     print('-------stations--------')
     stations, stations_rough, cluster_size = get_stations()
@@ -284,7 +313,7 @@ if __name__ == "__main__":
     weather_phrases = clean_weatherdata(weatherdata)
 
     print('---------tripdata-to-stations---------')
-    pickups = tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+    tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
 
-    print('---------tripdata-to-returns---------')
-    pickups = tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+    # print('---------tripdata-to-returns---------')
+    # tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
