@@ -1,10 +1,13 @@
 import copy
 import pandas as pd
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
 
 
+# GOAL = "pickups"
 GOAL = "Goal"
+THRESHOLD = 0.2
 
 
 class Node:
@@ -31,24 +34,28 @@ class Tree:
 
     def create_tree(self, records_df):
         """creates the tree and returns the root"""
-        order = self.orginize_nodes(records_df)
-        return self.recursive_build(records_df, order, [], 0)
+        attributes = list(records_df.columns)
+        return self.recursive_build(records_df, attributes, [], 0)
 
-    def recursive_build(self, records_df, order, path, depth):
+    def recursive_build(self, records_df, attributes, path, depth):
         """Recursive helper to build the tree"""
-        data = order[0]
-        if data != GOAL:
+        attribute = self.get_next_attribute(attributes, records_df)
+        while len(records_df[attribute].value_counts()) == 1 and \
+                len(attributes) > 1:
+            attributes.remove(attribute)
+            attribute = self.get_next_attribute(attributes, records_df)
+        if attribute != GOAL:
             if not path:
-                node = Node(data, depth=depth)
+                node = Node(attribute, depth=depth)
             else:
-                node = Node(data, path, depth)
+                node = Node(attribute, path, depth)
             children = []
-            for val in records_df[data].unique():
-                new_data = records_df[records_df[data] == val]
-                records_df = records_df[records_df[data] != val]
-                remaining = copy.deepcopy(order[1:])
-                new_path = copy.deepcopy(path + [(data, val)])
-
+            for val in records_df[attribute].unique():
+                new_data = records_df[records_df[attribute] == val]
+                new_path = copy.deepcopy(path + [(attribute, val)])
+                records_df = records_df[records_df[attribute] != val]
+                remaining = copy.deepcopy(attributes)
+                remaining.remove(attribute)
                 children.append(self.recursive_build(new_data,
                                                      remaining, new_path,
                                                      depth+1))
@@ -57,17 +64,48 @@ class Tree:
             node = Node(self.decide_leaf(records_df), path, depth=depth)
         return node
 
-    def orginize_nodes(self, records_df):
-        """Orginize the dictionary according to a certain logic"""
-        attributes = list(records_df.columns)
-        return attributes
+    def get_next_attribute(self, attribute_list, records_df):
+        """returns the next attribute"""
+        return attribute_list[0]
 
     def decide_leaf(self, records_df):
         """Decide the value of the leaf based on the records"""
         return records_df[GOAL].value_counts().argmax()
 
+    def pruning(self, threshold):
+        """Prunes the tree based on a threshold"""
+        pass
+
+    def get_val(self, row):
+        """Gets the relevant node based on the row"""
+        pass
+
+    def save_tree(self, output_name):
+        """Saves the tree"""
+        pass
+
+    def load_tree(self, output_name):
+        """Saves the tree"""
+        pass
+
+
+class EntropyTree(Tree):
+    def get_next_attribute(self, attribute_list, records_df):
+        entropy = dict()
+        for attribute in attribute_list:
+            p = records_df[attribute].value_counts() / len(records_df)
+            entropy[attribute] = np.sum(p * np.log2(1 / p))
+
+        return min(entropy, key=entropy.get)
+
+
+class InformationGainTree(Tree):
+    def get_next_attribute(self, attribute_list, records_df):
+        pass
+
 
 def generate_graph(tree):
+    """Generate a graph from the tree"""
     G = nx.DiGraph()
     nodes_left = [(tree.root, None)]
     labels = {}
@@ -101,6 +139,7 @@ def generate_graph(tree):
 
 
 def draw_tree(G):
+    """Draw the tree"""
     pos = nx.spring_layout(G)
     labels = {}
     for node in G.nodes():
@@ -117,6 +156,10 @@ def draw_tree(G):
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("dataf.csv")
-    test = Tree(data)
+    data = pd.read_csv("dataa.csv")
+    # data = pd.read_csv("pickups_2019.csv")
+    # test = Tree(data)
+    test = EntropyTree(data)
+    test = InformationGainTree(data)
     G = generate_graph(test)
+    # todo: add pruning, information gain
