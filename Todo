@@ -13,3 +13,17 @@ Maybe create a connection between stations based on GEO
 
 
 https://www.capitalbikeshare.com/system-data
+
+
+Current Flow:
+Get all data for everyone
+Create training and test data - use the same in every computer
+Create the trees based on the training data:
+    Should we split the data?
+    Need to decide on attributes for special trees
+    Same trees for everyone?
+Train NN:
+    multiple training
+    change parameters
+Visualization
+Report

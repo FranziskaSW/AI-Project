@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-
 # GOAL = "pickups"
 GOAL = "Goal"
 
@@ -19,6 +18,8 @@ class Node:
         self.depth = depth
 
     def __del__(self):
+        for child in self.children:
+            del child
         del self.children
 
     def add_children(self, children):
@@ -26,20 +27,23 @@ class Node:
 
 
 class Tree:
-    def __init__(self, records_df):
+    def __init__(self, records_df, limit=0, attributes=None):
         """creates the tree based on a dictionary of attributes and options"""
+        self.limit = limit
+        self.rows = len(records_df)
         if records_df is not None:
-            self.root = self.create_tree(records_df)
+            self.root = self.create_tree(records_df, attributes)
         else:
             self.root = Node(None)
 
     def __del__(self):
         del self.root
 
-    def create_tree(self, records_df):
+    def create_tree(self, records_df, attributes=None):
         """creates the tree and returns the root"""
-        attributes = list(records_df.columns)
-        attributes.remove(GOAL)
+        if not attributes:
+            attributes = list(records_df.columns)
+            attributes.remove(GOAL)
         return self.recursive_build(records_df, attributes, [], 0)
 
     def recursive_build(self, records_df, attributes, path, depth):
@@ -48,6 +52,8 @@ class Tree:
         while attribute and len(records_df[attribute].value_counts()) == 1:
             attributes.remove(attribute)
             attribute = self.get_next_attribute(attributes, records_df)
+        if self.limit and self.limit <= depth:
+            attribute = None
         if not attribute:
             attribute = GOAL
         if attribute != GOAL:
@@ -61,9 +67,8 @@ class Tree:
                 new_path = copy.deepcopy(path + [(attribute, val)])
                 records_df = records_df[records_df[attribute] != val]
                 remaining = copy.deepcopy(attributes)
-                children.append(self.recursive_build(new_data,
-                                                     remaining, new_path,
-                                                     depth+1))
+                children.append(self.recursive_build(new_data, remaining,
+                                                     new_path, depth + 1))
             node.add_children(children)
         else:
             node = Node(self.decide_leaf(records_df), path, depth=depth)
@@ -80,9 +85,29 @@ class Tree:
         """Decide the value of the leaf based on the records"""
         return records_df[GOAL].value_counts().argmax()
 
-    def pruning(self, threshold):
+    def pruning(self, records_df, threshold):
         """Prunes the tree based on a threshold"""
-        pass
+        nodes_to_check = [self.root]
+        while nodes_to_check:
+            node = nodes_to_check.pop()
+            children_remove = []
+            children_append = []
+            for child in node.children:
+                path = child.choices
+                depth = child.depth
+                relevant = copy.deepcopy(records_df)
+                for attribute, value in path:
+                    relevant = relevant[relevant[attribute] == value]
+                if len(relevant) / self.rows <= threshold:
+                    children_remove.append(child)
+                    children_append.append(Node(self.decide_leaf(relevant),
+                                              path, depth=depth))
+                else:
+                    nodes_to_check.append(child)
+            for child in children_remove:
+                node.children.remove(child)
+            for child in children_append:
+                node.children.append(child)
 
     def get_val(self, df_row):
         """Gets the relevant node based on the row"""
@@ -118,6 +143,7 @@ class EntropyTree(Tree):
     def get_next_attribute(self, attribute_list, records_df):
         """returns the attribute with the minimum entropy"""
         entropy = calc_entropy(attribute_list, records_df)
+        entropy = {k: v for k, v in entropy.items() if v}
         if len(entropy):
             return min(entropy, key=entropy.get)
         return None
@@ -181,7 +207,8 @@ def generate_graph(tree):
     while nodes_left:
         cur_node, cur_parent = nodes_left.pop()
         if cur_node.choices:
-            node_name = ''.join(str(tup[0]) + str(tup[1]) for tup in cur_node.choices)
+            node_name = ''.join(
+                str(tup[0]) + str(tup[1]) for tup in cur_node.choices)
         else:
             node_name = cur_node.data
         if cur_node.depth in max_row.keys():
@@ -214,23 +241,44 @@ def draw_tree(G):
     for edge in G.edges:
         edge_labels[edge] = 0
     nx.draw_networkx_nodes(G, pos, G.nodes)
-    nx.draw_networkx_labels(G, pos, labels, font_size=16)
+    nx.draw_networkx_labels(G, pos, labels, font_size=1)
     nx.draw_networkx_edges(G, pos, G.edges)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=1)
     plt.axis('off')
     plt.show()
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("dataa.csv")
-    # tree = Tree(data)
-    # G = generate_graph(tree)
+    data = pd.read_csv("datad.csv")
+
+    tree = Tree(data)
+    test = copy.deepcopy(tree)
+    test.pruning(data, 0.3)
+    G = generate_graph(test)
+    G = generate_graph(tree)
+    # num_of_attributes = Tree(data, 3)
+    # G = generate_graph(num_of_attributes)
+    # by_attributes = Tree(data, attributes=["When", "Where", "Offence"])
+    # G = generate_graph(by_attributes)
+
     # entropy = EntropyTree(data)
     # G = generate_graph(entropy)
+    # num_of_attribute_entropy = EntropyTree(data, 3)
+    # G = generate_graph(num_of_attribute_entropy)
+    # entropy_attributes = EntropyTree(data, attributes=["Column2", "Column1"])
+    # G = generate_graph(entropy_attributes)
+    # entropy_attributes = EntropyTree(data, attributes=["Column2", "Column1"])
+    # G = generate_graph(entropy_attributes)
+    #
     # info_gain = InformationGainTree(data)
     # G = generate_graph(info_gain)
-    information_gain_ratio = InformationRatioTree(data)
-    G = generate_graph(information_gain_ratio)
+    # num_of_attribute_info_gain = InformationGainTree(data, 3)
+    # G = generate_graph(num_of_attribute_info_gain)
+    #
+    # information_gain_ratio = InformationRatioTree(data)
+    # G = generate_graph(information_gain_ratio)
+    # num_of_attribute_info_ratio = InformationRatioTree(data, 3)
+    # G = generate_graph(num_of_attribute_info_ratio)
 
     # path = os.getcwd()
     # sample = data.sample(1)
@@ -239,5 +287,4 @@ if __name__ == "__main__":
     # print(test.get_val(sample))
     # test.save_tree(path + "/trees/test.txt")
 
-    # todo: add pruning
     # todo: randomForest - train trees based on different examples?
