@@ -2,11 +2,10 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import math
-import csv
 import holidays
 import numpy as np
 import json
-import pickle
+import copy
 cwd = os.getcwd()
 us_holidays = holidays.UnitedStates()
 
@@ -56,6 +55,17 @@ def sort_in_clusters(data, level, grid_size, suffix=None):
             layers['L' + str(level)] = layers.apply(lambda x: str(suffix) + '_' + str(int(x.lat + x.lon)), axis=1)
         return layers[['id', 'L' + str(level)]]
 
+def remerge_clusters(data, cluster_id):
+    subset = data[data.cluster_id == cluster_id]
+    if subset.shape[0] > 1:
+        total_size = sum(subset.cluster_size)
+        L1 = subset['L1'][subset.cluster_size == subset.cluster_size.max()].iloc[0]
+        L2 = subset.L2[subset.cluster_size == subset.cluster_size.max()].iloc[0]
+        new_row = pd.DataFrame(data=[[cluster_id, total_size, L1, L2]], columns=list(subset.columns))
+        return (new_row)
+    else:
+        return (subset)
+
 def get_stations(path = cwd + '/data/Capital_Bike_Share_Locations.csv', grid_size=30):
     stations = pd.read_csv(path)
     stations['CAPACITY'] = stations.NUMBER_OF_BIKES + stations.NUMBER_OF_EMPTY_DOCKS
@@ -63,36 +73,18 @@ def get_stations(path = cwd + '/data/Capital_Bike_Share_Locations.csv', grid_siz
     stations.columns = ['id', 'latitude', 'longitude', 'capacity']
 
     # clusters
-    # offset_lat = (stations.latitude.max() - stations.latitude.min()) / grid_size
-    # offset_lon = (stations.longitude.max() - stations.longitude.min()) / grid_size
-    # stations['lat'] = stations.latitude.apply(lambda x: math.floor(x / offset_lat) * offset_lat)
-    # stations['lon'] = stations.longitude.apply(lambda x: math.floor(x / offset_lon) * offset_lon)
-    #
-    # new_stat = stations.groupby(['lat', 'lon']).count().reset_index()
-    # new_stat.id = range(0, new_stat.shape[0])
-    # new_stat = new_stat[['id', 'lat', 'lon']]
-    #
-    # stations_rough = stations.merge(new_stat, how='left',
-    #                                 left_on=['lat', 'lon'],
-    #                                 right_on=['lat', 'lon'])
-    #
-    # stations_rough.rename(columns={'id_y': 'cluster_id'}, inplace=True)
-
-    stations_rough = sort_in_clusters(stations, 'clustering', 36)
-    cluster_size = stations_rough.groupby(by='cluster_id').count().reset_index().rename(columns={'id': 'cluster_size'})[
-        ['cluster_id', 'cluster_size']]
+    stations_rough = sort_in_clusters(stations, 'clustering', 34)
 
     # layers - sub-layers
-
     # level 1, devide in 4 parts
     layers = sort_in_clusters(stations, level=1, grid_size=4)
     stations = stations.merge(layers, how='left', left_on='id', right_on='id').fillna('0')
 
-    # level 2, take busy clusters from level 1 and devide in 3 parts
+    # level 2, take busy clusters from level 1 and divide in 4 parts
     layers_combined = pd.DataFrame(columns=['id', 'L2'])
     for L1_id in ['101', '102', '2', '202']:
         data_subcluster = stations[stations.L1 == L1_id]
-        layers = sort_in_clusters(data_subcluster, level=2, grid_size=3, suffix=L1_id)
+        layers = sort_in_clusters(data_subcluster, level=2, grid_size=4, suffix=L1_id)
         layers_combined = pd.concat([layers_combined, layers], join='inner', ignore_index=True)
 
     layers_combined['id'] = layers_combined.id.apply(lambda x: int(x))  # transform into in, otherwise merge doesnt work
@@ -100,9 +92,17 @@ def get_stations(path = cwd + '/data/Capital_Bike_Share_Locations.csv', grid_siz
 
     # expand stations_rough with L1 and L2 information
     stations_rough = stations_rough.merge(stations[['id', 'L1', 'L2']], how='left', left_on='id', right_on='id')
+    cluster_size = stations_rough.groupby(by=['cluster_id', 'L1', 'L2']).count().reset_index().rename(columns={'id': 'cluster_size'})[
+        ['cluster_id', 'cluster_size', 'L1', 'L2']]
 
-    return stations, stations_rough, cluster_size
+    cluster_info = pd.DataFrame(columns=cluster_size.columns)
+    for i in range(0, cluster_size.cluster_id.max()):
+        new_row = remerge_clusters(cluster_size, i)
+        cluster_info = pd.concat([cluster_info, new_row], ignore_index=True)
 
+    cluster_info['cluster_id'] = cluster_info.cluster_id.apply(lambda x: int(x))
+
+    return stations, stations_rough, cluster_info
 
 def load_weatherdata(path=cwd + '/data/weatherdata.json'):
     with open(path) as json_file:
@@ -142,29 +142,37 @@ def clean_weatherdata(weatherdata):
 
     return phrases
 
-def yearly_data_starttime(data, year):
+def yearly_data(data, year, time_str):
     print(data.shape, year)
     start = datetime(year=year, month=1, day=1, hour=0, minute=0)
     end = datetime(year=year+1, month=1, day=1, hour=0, minute=0)
-    data_year = data[(data.starttime >= start) & (data.starttime < end)]
+    data_year = data[(data[time_str] >= start) & (data[time_str] < end)]
     print(data_year.shape, data.shape, year)
     return data_year
 
-def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
-    data = data[['starttime', 'Start station number']]
-    data_s = stations_rough.merge(data, how='right', left_on='id', right_on='Start station number')[
-        ['starttime', 'cluster_id', 'L1', 'L2']]
-
-    # within next 90 minutes will have x pickups at station
-    time = startdate
+def tripdata_to_station(action, startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
+    # within next 90 minutes will have x actions at station
     delta = timedelta(minutes=90)
+    time = startdate
 
-    pickups_combined = pd.read_pickle(cwd+'/data/pickups_empty.pkl')
+    if action == 'pickups':
+        action_str, time_str = 'pickups', 'starttime'
+        data_column = 'Start station number'
+    elif action == 'returns':
+        action_str, time_str = 'returns', 'endtime'
+        data_column = 'End station number'
+    else:
+        print('wrong action type, choose pickups or returns')
+
+    data = data[[time_str, data_column]]
+    data_s = stations_rough.merge(data, how='right', left_on='id', right_on=data_column)[[time_str, 'cluster_id']]
+
+    actions_combined = pd.read_pickle(cwd+'/data/' + action_str + '_' + 'empty.pkl')
     step = 1
 
     first_year = startdate.year
     current_year = first_year
-    data_year = yearly_data_starttime(data_s, first_year)
+    data_year = yearly_data(data_s, first_year, time_str)
 
     while time < enddate:
         print(time, time + delta, current_year)
@@ -172,35 +180,43 @@ def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluste
         if time.year == current_year + 1:
 
             # final save of data from last year
-            cols = list(pickups_combined.columns)
-            cols.remove('pickups')
-            cols.append('pickups')
-            pickups_combined = pickups_combined[cols]
+            cols = list(actions_combined.columns)
+            cols.remove(action_str)
+            cols.append(action_str)
+            actions_combined = actions_combined[cols]
 
-            pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-            pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+            actions_combined.to_pickle(cwd + '/data/' + action_str + '_' +  str(current_year) + '.pkl')
+            actions_combined.to_csv(cwd + '/data/' + action_str + '_' +  str(current_year) + '.csv')
 
             # get data for next year
             current_year += 1
             print('--------------- next year, use data for ', current_year)
-            data_year = yearly_data_starttime(data_s, current_year)
+            data_year = yearly_data(data_s, current_year, time_str)
 
-            pickups_combined = pd.read_pickle(cwd + '/data/pickups_empty.pkl')
+            actions_combined = pd.read_pickle(cwd + '/data/' + action_str + '_' + 'empty.pkl')
 
-        pickups = data_year[(data_year.starttime >= time) &
-                         (data_year.starttime < time + delta)].groupby(['cluster_id', 'L1', 'L2']).count()  # Member type
+        if action == 'pickups':
+            actions = data_year[(data_year[time_str] >= time) &
+                             (data_year[time_str] < time + delta)].groupby(['cluster_id']).count()
+        elif action == 'returns':  # offset of 30 minutes before pickups
+            actions = data_year[(data_year[time_str] >= time - timedelta(minutes=30)) &
+                             (data_year[time_str] < time + delta - timedelta(minutes=30))].groupby(['cluster_id']).count()
 
         # multi-index to single index and rename columns
-        pickups = pickups.reset_index()
-        pickups.rename(columns={'starttime': 'pickups'}, inplace=True)
+        actions = actions.reset_index()
+        actions.rename(columns={time_str: action_str}, inplace=True)
+        actions = cluster_size.merge(actions, how='left', left_on='cluster_id', right_on='cluster_id').fillna(0)
+        #
+        # # cluster size
+        # actions = actions.merge(cluster_size, how='left')
 
-        # cluster size
-        pickups = pickups.merge(cluster_size, how='left')
-
-        pickups['holiday'] = int(time in us_holidays)
-        pickups['weekday'] = time.weekday()
-        pickups['time'] = time.time()
-        pickups['month'] = time.month
+        actions['holiday'] = int(time in us_holidays)
+        actions['weekday'] = time.weekday()
+        actions['datetime'] = time
+        # if action == 'pickups': actions['datetime'] = time
+        # else: actions['datetime'] = time + timedelta(minutes=30) # offset to pickups
+        actions['time'] = time.time()
+        actions['month'] = time.month
 
         # weather data
         try:
@@ -210,140 +226,58 @@ def tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluste
             print('use last available weather information')
             pass
 
-        pickups['phrase'] = current_weather['phrase']
-        pickups['temperature'] = current_weather['temp']
-        pickups['humidity'] = current_weather['humidity']
-        pickups = pickups.merge(weather_phrases, how='left')
-        pickups = pickups.drop(columns='phrase')
+        actions['phrase'] = current_weather['phrase']
+        actions['temperature'] = current_weather['temp']
+        actions['humidity'] = current_weather['humidity']
+        actions = actions.merge(weather_phrases, how='left')
+        actions = actions.drop(columns='phrase')
 
-        pickups_combined = pd.concat([pickups_combined, pickups], ignore_index=True)
+        actions_combined = pd.concat([actions_combined, actions], ignore_index=True)
 
-        # pickups_empty = pd.DataFrame(columns=list(pickups.columns))
-        # pickups_empty.to_pickle(cwd+'/data/pickups_empty.pkl')
+        # actions_empty = pd.DataFrame(columns=list(actions.columns))
+        # actions_empty.to_pickle(cwd+'/data/' + action_str + '_' + 'empty.pkl')
 
         if not (step%50):
             print(step, ' save csv and pkl')
-            pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-            pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+            actions_combined.to_pickle(cwd + '/data/' + action_str + '_' +  str(current_year) + '.pkl')
+            actions_combined.to_csv(cwd + '/data/' + action_str + '_' +  str(current_year) + '.csv')
 
         time += delta
         step += 1
     # final save of data
 
-    cols = list(pickups_combined.columns)
-    cols.remove('pickups')
-    cols.append('pickups')
-    pickups_combined = pickups_combined[cols]
+    cols = list(actions_combined.columns)
+    cols.remove(action_str)
+    cols.append(action_str)
+    actions_combined = actions_combined[cols]
 
-    pickups_combined.to_pickle(cwd + '/data/pickups_' + str(current_year) + '.pkl')
-    pickups_combined.to_csv(cwd + '/data/pickups_' + str(current_year) + '.csv')
+    actions_combined.to_pickle(cwd + '/data/' + action_str + '_' +  str(current_year) + '.pkl')
+    actions_combined.to_csv(cwd + '/data/' + action_str + '_' +  str(current_year) + '.csv')
 
-    return pickups_combined
+    return actions_combined
 
+def demand(pickups, returns, year):
+    pickups['rel_pickups'] = pickups.pickups / pickups.cluster_size
+    returns['rel_returns'] = returns.returns / returns.cluster_size
 
-def yearly_data_endtime(data, year):
-    print(data.shape, year)
-    start = datetime(year=year, month=1, day=1, hour=0, minute=0)
-    end = datetime(year=year+1, month=1, day=1, hour=0, minute=0)
-    data_year = data[(data.endtime >= start) & (data.endtime < end)]
-    print(data_year.shape, data.shape, year)
-    return data_year
+    results = copy.deepcopy(returns)
+    results['rel'] = returns.rel_returns - pickups.rel_pickups
+    results['ceil'] = results['rel'].apply(lambda x: math.ceil(x))
 
-def tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
-    data = data[['endtime', 'Start station number']]
-    data_s = stations_rough.merge(data, how='right', left_on='id', right_on='Start station number')[
-        ['endtime', 'cluster_id', 'L1', 'L2']]
-
-    # within next 90 minutes will have x returns at station
-    time = startdate
-    delta = timedelta(minutes=90)
-
-    returns_combined = pd.read_pickle(cwd+'/data/returns_empty.pkl')
-    step = 1
-
-    first_year = startdate.year
-    current_year = first_year
-    data_year = yearly_data_endtime(data_s, first_year)
-
-    while time < enddate:
-        print(time, time + delta, current_year)
-
-        if time.year == current_year + 1:
-
-            # final save of data from last year
-            cols = list(returns_combined.columns)
-            cols.remove('returns')
-            cols.append('returns')
-            returns_combined = returns_combined[cols]
-
-            returns_combined.to_pickle(cwd + '/data/returns_' + str(current_year) + '.pkl')
-            returns_combined.to_csv(cwd + '/data/returns_' + str(current_year) + '.csv')
-
-            # get data for next year
-            current_year += 1
-            print('--------------- next year, use data for ', current_year)
-            data_year = yearly_data_endtime(data_s, current_year)
-
-            returns_combined = pd.read_pickle(cwd + '/data/returns_empty.pkl')
-
-        returns = data_year[(data_year.endtime >= time) &
-                         (data_year.endtime < time + delta)].groupby(['cluster_id', 'L1', 'L2']).count()  # Member type
-
-        # multi-index to single index and rename columns
-        returns = returns.reset_index()
-        returns.rename(columns={'endtime': 'returns'}, inplace=True)
-
-        # cluster size
-        returns = returns.merge(cluster_size, how='left')
-
-        returns['holiday'] = int(time in us_holidays)
-        returns['weekday'] = time.weekday()
-        returns['time'] = time.time()
-        returns['month'] = time.month
-
-        # weather data
-        try:
-            current_weather = weatherdata[(weatherdata.datetime >= time - timedelta(minutes=30)) &
-                                         (weatherdata.datetime < time + timedelta(minutes=29))].iloc[0]
-        except IndexError:
-            print('use last available weather information')
-            pass
-
-        returns['phrase'] = current_weather['phrase']
-        returns['temperature'] = current_weather['temp']
-        returns['humidity'] = current_weather['humidity']
-        returns = returns.merge(weather_phrases, how='left')
-        returns = returns.drop(columns='phrase')
-
-        returns_combined = pd.concat([returns_combined, returns], ignore_index=True)
-
-        # returns_empty = pd.DataFrame(columns=list(returns.columns))
-        # returns_empty.to_pickle(cwd+'/data/returns_empty.pkl')
-
-        if not (step%50):
-            print(step, ' save csv and pkl')
-            returns_combined.to_pickle(cwd + '/data/returns_' + str(current_year) + '.pkl')
-            returns_combined.to_csv(cwd + '/data/returns_' + str(current_year) + '.csv')
-
-        time += delta
-        step += 1
-    # final save of data
-
-    cols = list(returns_combined.columns)
-    cols.remove('returns')
-    cols.append('returns')
-    returns_combined = returns_combined[cols]
-
-    returns_combined.to_pickle(cwd + '/data/returns_' + str(current_year) + '.pkl')
-    returns_combined.to_csv(cwd + '/data/returns_' + str(current_year) + '.csv')
-
-    return returns_combined
-
+    results = results[['cluster_id', 'L1', 'L2',
+                       'weekday', 'holiday', 'time',
+                       'month', 'clear_sky', 'extreme_weather',
+                       'foggy', 'humidity', 'thunderstorm',
+                       'rain', 'temperature', 'wind',
+                       'wintry', 'ceil']]
+    results.to_csv(cwd + '/data/results_' + str(year) + '.csv')
+    results.to_pickle(cwd + '/data/results_' + str(year) + '.pkl')
+    return results
 
 if __name__ == "__main__":
 
-    startdate = datetime(year=2017, month=12, day=21, hour=0, minute=0)
-    enddate = datetime(year=2018, month=1, day=1, hour=0, minute=0)
+    startdate = datetime(year=2015, month=1, day=1, hour=0, minute=0)
+    enddate = datetime(year=2019, month=7, day=1, hour=0, minute=0)
 
     print('--------tripdata------')
     # data = load_data()
@@ -357,8 +291,14 @@ if __name__ == "__main__":
     weatherdata = load_weatherdata()
     weather_phrases = clean_weatherdata(weatherdata)
 
-    # print('---------tripdata-to-stations---------')
-    # tripdata_to_station_pickups(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+    print('---------tripdata-to-stations---------')
+    tripdata_to_station('pickups', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
 
     print('---------tripdata-to-returns---------')
-    tripdata_to_station_returns(startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+    tripdata_to_station('returns', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+
+    print('--------demand--------')
+    year = startdate.year
+    pickups = pd.read_pickle(cwd + '/data/pickups_' + str(year) + '.pkl')
+    returns = pd.read_pickle(cwd + '/data/returns_' + str(year) + '.pkl')
+    demand(pickups, returns, year)
