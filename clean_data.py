@@ -73,7 +73,7 @@ def get_stations(path = cwd + '/data/Capital_Bike_Share_Locations.csv', grid_siz
     stations.columns = ['id', 'latitude', 'longitude', 'capacity']
 
     # clusters
-    stations_rough = sort_in_clusters(stations, 'clustering', 34)
+    stations_rough = sort_in_clusters(stations, 'clustering', 32)
 
     # layers - sub-layers
     # level 1, devide in 4 parts
@@ -298,7 +298,7 @@ if __name__ == "__main__":
     tripdata_to_station('returns', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
 
     print('--------demand--------')
-    year = startdate.year
-    pickups = pd.read_pickle(cwd + '/data/pickups_' + str(year) + '.pkl')
-    returns = pd.read_pickle(cwd + '/data/returns_' + str(year) + '.pkl')
-    demand(pickups, returns, year)
+    for year in [2015, 2016, 2017, 2018, 2019]:
+        pickups = pd.read_pickle(cwd + '/data/pickups_' + str(year) + '.pkl')
+        returns = pd.read_pickle(cwd + '/data/returns_' + str(year) + '.pkl')
+        demand(pickups, returns, year)
