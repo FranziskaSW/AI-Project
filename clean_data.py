@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
     print('--------tripdata------')
     # data = load_data()
-    # data.to_pickle(cwd+'/data/tripdata_2010-2014.pkl')
+    # data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
     data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
 
     print('-------stations--------')
