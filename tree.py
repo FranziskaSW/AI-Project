@@ -167,7 +167,7 @@ class InformationRatioTree(Tree):
         info_gain_ratio = dict()
         for attribute in attribute_list:
             p = records_df[attribute].value_counts() / len(records_df)
-            int_value = np.sum(p * np.log2(1 / p))
+            int_value = -np.sum(p * np.log2(p))
             info_gain_ratio[attribute] = info_gain[attribute] / int_value
         if len(info_gain_ratio):
             return max(info_gain_ratio, key=info_gain_ratio.get)
@@ -179,7 +179,7 @@ def calc_entropy(attribute_list, records_df):
     entropy = dict()
     for attribute in attribute_list:
         p = records_df[attribute].value_counts() / len(records_df)
-        entropy[attribute] = np.sum(p * np.log2(1 / p))
+        entropy[attribute] = -np.sum(p * np.log2(p))
     return entropy
 
 
@@ -192,8 +192,7 @@ def information_gain(attribute_list, records_df, goal=GOAL):
         for val in records_df[attribute].unique():
             relevant = records_df[records_df[attribute] == val]
             p = relevant[goal].value_counts() / len(relevant)
-            remaining_entropy += np.sum(p * np.log2(1 / p) * len(relevant)
-                                        / len(records_df))
+            remaining_entropy += -(np.sum(p * np.log2(p) * len(relevant)) / len(records_df))
         info_gain[attribute] = goal_entropy - remaining_entropy
     return info_gain
 
