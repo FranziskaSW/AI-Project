@@ -144,10 +144,13 @@ def clean_weatherdata(weatherdata):
 
 def yearly_data(data, year, time_str):
     print(data.shape, year)
-    start = datetime(year=year, month=1, day=1, hour=0, minute=0)
+    start = datetime(year=year-1, month=12, day=31, hour=20, minute=0)  # a few hours before, because of return offset
+                                # 2016 returns with new timeframe (year_data dropped half an hour of relevant timeframe)
+                                # new: 123054, 123091
+                                # old: 123054, 123063
     end = datetime(year=year+1, month=1, day=1, hour=0, minute=0)
     data_year = data[(data[time_str] >= start) & (data[time_str] < end)]
-    print(data_year.shape, data.shape, year)
+    print('have data from: ', start, ' to ', end, data_year.shape)
     return data_year
 
 def tripdata_to_station(action, startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases):
@@ -276,13 +279,10 @@ def demand(pickups, returns, year):
 
 if __name__ == "__main__":
 
-    startdate = datetime(year=2015, month=1, day=1, hour=0, minute=0)
-    enddate = datetime(year=2019, month=7, day=1, hour=0, minute=0)
-
     print('--------tripdata------')
     # data = load_data()
-    # data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
-    data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
+    # data.to_pickle(cwd+'/data/tripdata_2010-2015.pkl')
+    data = pd.read_pickle(cwd+'/data/tripdata_2010-2015.pkl')
 
     print('-------stations--------')
     stations, stations_rough, cluster_size = get_stations()
@@ -291,14 +291,20 @@ if __name__ == "__main__":
     weatherdata = load_weatherdata()
     weather_phrases = clean_weatherdata(weatherdata)
 
-    print('---------tripdata-to-stations---------')
-    tripdata_to_station('pickups', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+    for year in [2011, 2012, 2013, 2014, 2015]:
 
-    print('---------tripdata-to-returns---------')
-    tripdata_to_station('returns', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+        startdate = datetime(year=year, month=1, day=1, hour=0, minute=0)
+        enddate = datetime(year=year+1, month=1, day=1, hour=0, minute=0)
+
+        print('---------tripdata-to-stations---------')
+        tripdata_to_station('pickups', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
+
+        print('---------tripdata-to-returns---------')
+        tripdata_to_station('returns', startdate, enddate, data, stations_rough, cluster_size, weatherdata, weather_phrases)
 
     print('--------demand--------')
-    for year in [2015, 2016, 2017, 2018, 2019]:
+    for year in [2011, 2012, 2013, 2014, 2015]:
+        print(year)
         pickups = pd.read_pickle(cwd + '/data/pickups_' + str(year) + '.pkl')
         returns = pd.read_pickle(cwd + '/data/returns_' + str(year) + '.pkl')
         demand(pickups, returns, year)
