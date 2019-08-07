@@ -1,17 +1,3 @@
-Download all data
-Take the stations and the time, member type
-Get information about stations
-Build multiple trees based on stations, each tree in different order
-Tree for bikes on the way to the station
-Tree for bikes that are expected to leave the station
-Trying to predict number of bikes needed
-Create NN based on all the trees
-Compare results of random forest, forest with NN or pure NN.
-
-
-Maybe create a connection between stations based on GEO
-
-
 https://www.capitalbikeshare.com/system-data
 
 
@@ -25,5 +11,17 @@ Create the trees based on the training data:
 Train NN:
     multiple training
     change parameters
-Visualization
+Visualization - whether in real time?
 Report
+Video
+
+
+Tasks:
+Create visualization for end product & trees
+Trees Ideas:
+    clusters+time
+    clusters+time+weather
+    clusters+time+holiday
+    clusters+time+month
+    clusters+time+weekday
+    clusters+time+humidity
