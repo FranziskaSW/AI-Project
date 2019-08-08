@@ -14,22 +14,23 @@ TREE = "tree"
 ENTROPY = "entropy"
 INFORMATION_GAIN = "information_gain"
 INFORMATION_RATIO = "information_ratio"
+TRAINING_SET = "1"
 
 BASIC_ATTRIBUTES = ["L1", "L2", "time"]
 IGNORE_LIST = BASIC_ATTRIBUTES + ["Unnamed: 0", "Unnamed: 0.1", "cluster_id",
                                   "thunderstorm", "foggy", "humidity", "demand"]
 
 
-def tree_creation(type, records_df, limit=0, attributes=None, goal=GOAL):
+def tree_creation(type, records_df, limit=0, attributes=None, goal=GOAL, name=""):
     """This function creates the trees"""
     if type == TREE:
-        return Tree(records_df, limit, attributes, goal)
+        return Tree(records_df, limit, attributes, goal, name)
     elif type == ENTROPY:
-        return EntropyTree(records_df, limit, attributes, goal)
+        return EntropyTree(records_df, limit, attributes, goal, name)
     elif type == INFORMATION_GAIN:
-        return InformationGainTree(records_df, limit, attributes, goal)
+        return InformationGainTree(records_df, limit, attributes, goal, name)
     elif type == INFORMATION_RATIO:
-        return InformationRatioTree(records_df, limit, attributes, goal)
+        return InformationRatioTree(records_df, limit, attributes, goal, name)
     else:
         return
 
@@ -56,15 +57,17 @@ def create_trees(training_data, goal):
     attr_list = create_attributes_list(training_data)
     for lst in attr_list:
         print(lst[-1])
-        res = []
-        trees = []
-        trees = [(TREE, training_data, 0, lst, goal)]
-        trees.append((ENTROPY, training_data, 0, lst, goal))
-        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal))
-        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal))
+        trees = [(TREE, training_data, 0, lst, goal, TREE+TRAINING_SET+lst[-1])]
+        trees.append((ENTROPY, training_data, 0, lst, goal,
+                      ENTROPY+TRAINING_SET+lst[-1]))
+        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal,
+                      INFORMATION_GAIN+TRAINING_SET+lst[-1]))
+        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal,
+                      INFORMATION_RATIO+TRAINING_SET+lst[-1]))
         res = p.starmap(tree_creation, trees)
         for t in res:
-            t.save_tree("trees/" + get_type(t) + "_" + lst[-1] + "_1.txt")
+            t.save_tree("trees/" + get_type(t) + "_" + lst[-1] + "_" +
+                        TRAINING_SET +".txt")
     p.close()
     p.join()
 
@@ -82,7 +85,7 @@ def create_file(test_data, all_trees, goal):
             row_dict["tree" + str(all_trees.index(t))] = t.get_val(row)
         row_dict[goal] = row[goal]
         output = output.append(pd.DataFrame.from_dict([row_dict]))
-    output.to_csv("testing_by_tree.csv")
+    output.to_csv("testing_by_tree_" + TRAINING_SET + ".csv")
 
 
 def export_trees(all_trees):
@@ -114,16 +117,18 @@ def additional_trees(training_data, goal):
     attr_list.append(new_basic + ["clear_sky", "extreme_weather"])
     for lst in attr_list:
         filename = "_".join(list(set(lst) - set(BASIC_ATTRIBUTES)))
-        res = []
-        trees = []
-        trees = [(TREE, training_data, 0, lst, goal)]
-        trees.append((ENTROPY, training_data, 0, lst, goal))
-        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal))
-        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal))
+        trees = [(TREE, training_data, 0, lst, goal,
+                  TREE+TRAINING_SET+filename)]
+        trees.append((ENTROPY, training_data, 0, lst, goal,
+                      ENTROPY+TRAINING_SET+filename))
+        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal,
+                      INFORMATION_GAIN+TRAINING_SET+filename))
+        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal,
+                      INFORMATION_RATIO+TRAINING_SET+filename))
         res = p.starmap(tree_creation, trees)
         for t in res:
             t.save_tree("trees/" + get_type(t) + "_" + filename
-                        + "_1.txt")
+                        + "_" + TRAINING_SET + ".txt")
     p.close()
     p.join()
 

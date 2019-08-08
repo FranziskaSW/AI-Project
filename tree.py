@@ -27,10 +27,11 @@ class Node:
 
 
 class Tree:
-    def __init__(self, records_df, limit=0, attributes=None, goal=GOAL):
+    def __init__(self, records_df, limit=0, attributes=None, goal=GOAL, name=""):
         """creates the tree based on a dictionary of attributes and options"""
         self.limit = limit
         self.goal = goal
+        self.name = name
         if records_df is not None:
             self.rows = len(records_df)
             self.root = self.create_tree(records_df, attributes)
