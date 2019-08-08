@@ -143,7 +143,7 @@ class Tree:
         with open(path, 'rb') as file:
             node = pickle.load(file)
         self.root = node.root
-        self.name = path
+        self.name = path.split("/")[-1].split(".")[0]
 
 
 class EntropyTree(Tree):
