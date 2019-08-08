@@ -10,10 +10,10 @@ GOAL = "demand"
 # GOAL = "Goal"
 TRAIN_LEVEL = 0.5
 POOL_SIZE = 2
-TREE = "tree"
-ENTROPY = "entropy"
-INFORMATION_GAIN = "information_gain"
-INFORMATION_RATIO = "information_ratio"
+TREE = "Tree"
+ENTROPY = "EntropyTree"
+INFORMATION_GAIN = "InformationGainTree"
+INFORMATION_RATIO = "InformationRatioTree"
 TRAINING_SET = "1"
 
 BASIC_ATTRIBUTES = ["L1", "L2", "time"]
@@ -57,17 +57,17 @@ def create_trees(training_data, goal):
     attr_list = create_attributes_list(training_data)
     for lst in attr_list:
         print(lst[-1])
-        trees = [(TREE, training_data, 0, lst, goal, TREE+TRAINING_SET+lst[-1])]
+        trees = [(TREE, training_data, 0, lst, goal, TREE + "_" + lst[-1] +
+                  "_" + TRAINING_SET)]
         trees.append((ENTROPY, training_data, 0, lst, goal,
-                      ENTROPY+TRAINING_SET+lst[-1]))
+                      ENTROPY + "_" + lst[-1] + "_" + TRAINING_SET))
         trees.append((INFORMATION_GAIN, training_data, 0, lst, goal,
-                      INFORMATION_GAIN+TRAINING_SET+lst[-1]))
+                      INFORMATION_GAIN + "_" + lst[-1] + "_" + TRAINING_SET))
         trees.append((INFORMATION_RATIO, training_data, 0, lst, goal,
-                      INFORMATION_RATIO+TRAINING_SET+lst[-1]))
+                      INFORMATION_RATIO + "_" + lst[-1] + "_" + TRAINING_SET))
         res = p.starmap(tree_creation, trees)
         for t in res:
-            t.save_tree("trees/" + get_type(t) + "_" + lst[-1] + "_" +
-                        TRAINING_SET +".txt")
+            t.save_tree("trees/" + t.name + ".txt")
     p.close()
     p.join()
 
@@ -118,17 +118,16 @@ def additional_trees(training_data, goal):
     for lst in attr_list:
         filename = "_".join(list(set(lst) - set(BASIC_ATTRIBUTES)))
         trees = [(TREE, training_data, 0, lst, goal,
-                  TREE+TRAINING_SET+filename)]
+                  TREE + "_" + filename + "_" + TRAINING_SET)]
         trees.append((ENTROPY, training_data, 0, lst, goal,
-                      ENTROPY+TRAINING_SET+filename))
+                      ENTROPY + "_" + filename + "_" + TRAINING_SET))
         trees.append((INFORMATION_GAIN, training_data, 0, lst, goal,
-                      INFORMATION_GAIN+TRAINING_SET+filename))
+                      INFORMATION_GAIN + "_" + filename + "_" + TRAINING_SET))
         trees.append((INFORMATION_RATIO, training_data, 0, lst, goal,
-                      INFORMATION_RATIO+TRAINING_SET+filename))
+                      INFORMATION_RATIO + "_" + filename + "_" + TRAINING_SET))
         res = p.starmap(tree_creation, trees)
         for t in res:
-            t.save_tree("trees/" + get_type(t) + "_" + filename
-                        + "_" + TRAINING_SET + ".txt")
+            t.save_tree("trees/" + t.name + ".txt")
     p.close()
     p.join()
 
@@ -138,8 +137,8 @@ if __name__ == "__main__":
     # training_data = data.sample(math.ceil(len(data) * TRAIN_LEVEL))
     #
     # test_data = data[~data.isin(training_data)].dropna()
-    training_data = load_data("data/training_data_1.csv")
-    # training_data = pd.read_csv(INPUT_PATH)
+    # training_data = load_data("data/training_data_1.csv")
+    training_data = pd.read_csv(INPUT_PATH)
     # create trees based on training data
     create_trees(training_data, GOAL)
     additional_trees(training_data, GOAL)
@@ -150,4 +149,5 @@ if __name__ == "__main__":
     # test = Tree(None)
     # test.load_tree("trees/" + "EntropyTree_clear_sky_1.txt")
     # generate_graph(test)
+    # print(test.name)
 

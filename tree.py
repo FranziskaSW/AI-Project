@@ -143,6 +143,7 @@ class Tree:
         with open(path, 'rb') as file:
             node = pickle.load(file)
         self.root = node.root
+        self.name = path
 
 
 class EntropyTree(Tree):
