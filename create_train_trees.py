@@ -4,7 +4,7 @@ import math
 from multiprocessing import Pool
 
 
-INPUT_PATH = "data/results_all.csv"
+INPUT_PATH = "data/training_data_1.csv"
 # INPUT_PATH = "dataa.csv"
 GOAL = "demand"
 # GOAL = "Goal"
@@ -15,9 +15,9 @@ ENTROPY = "entropy"
 INFORMATION_GAIN = "information_gain"
 INFORMATION_RATIO = "information_ratio"
 
-BASIC_ATTRIBUTES = ["L1", "L2", "time", "demand"]
+BASIC_ATTRIBUTES = ["L1", "L2", "time"]
 IGNORE_LIST = BASIC_ATTRIBUTES + ["Unnamed: 0", "Unnamed: 0.1", "cluster_id",
-                                  "thunderstorm", "foggy", "humidity"]
+                                  "thunderstorm", "foggy", "humidity", "demand"]
 
 
 def tree_creation(type, records_df, limit=0, attributes=None, goal=GOAL):
@@ -55,14 +55,16 @@ def create_trees(training_data, goal):
     # (type, df, limit, attributes, goal)
     attr_list = create_attributes_list(training_data)
     for lst in attr_list:
+        print(lst[-1])
         res = []
-        trees = [(TREE, training_data, 0, None, goal)]
-        trees.append((ENTROPY, training_data, 0, None, goal))
-        trees.append((INFORMATION_GAIN, training_data, 0, None, goal))
-        trees.append((INFORMATION_RATIO, training_data, 0, None, goal))
+        trees = []
+        trees = [(TREE, training_data, 0, lst, goal)]
+        trees.append((ENTROPY, training_data, 0, lst, goal))
+        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal))
+        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal))
         res = p.starmap(tree_creation, trees)
         for t in res:
-            t.save_tree("trees/" + get_type(t) + "_" + lst[-1] + ".txt")
+            t.save_tree("trees/" + get_type(t) + "_" + lst[-1] + "_1.txt")
     p.close()
     p.join()
 
@@ -100,18 +102,47 @@ def load_data(path):
     return pd.read_csv(path)
 
 
+def additional_trees(training_data, goal):
+    """"""
+    p = Pool(POOL_SIZE)
+    # every tree we want to create has to come in the format of
+    # (type, df, limit, attributes, goal)
+    new_basic = BASIC_ATTRIBUTES + ["weekday"]
+    attr_list = [new_basic + ["month"]]
+    attr_list.append(new_basic + ["clear_sky"])
+    attr_list.append(new_basic + ["extreme_weather"])
+    attr_list.append(new_basic + ["clear_sky", "extreme_weather"])
+    for lst in attr_list:
+        filename = "_".join(list(set(lst) - set(BASIC_ATTRIBUTES)))
+        res = []
+        trees = []
+        trees = [(TREE, training_data, 0, lst, goal)]
+        trees.append((ENTROPY, training_data, 0, lst, goal))
+        trees.append((INFORMATION_GAIN, training_data, 0, lst, goal))
+        trees.append((INFORMATION_RATIO, training_data, 0, lst, goal))
+        res = p.starmap(tree_creation, trees)
+        for t in res:
+            t.save_tree("trees/" + get_type(t) + "_" + filename
+                        + "_1.txt")
+    p.close()
+    p.join()
+
+
 if __name__ == "__main__":
     # data = pd.read_csv(INPUT_PATH)
     # training_data = data.sample(math.ceil(len(data) * TRAIN_LEVEL))
     #
     # test_data = data[~data.isin(training_data)].dropna()
-    # training_data = load_data("data/training_data_1.csv")
-    training_data = pd.read_csv("dataa.csv")
+    training_data = load_data("data/training_data_1.csv")
+    # training_data = pd.read_csv(INPUT_PATH)
     # create trees based on training data
     create_trees(training_data, GOAL)
+    additional_trees(training_data, GOAL)
     # export_trees(all_trees)
 
     # create file
     # create_file(test_data, all_trees, GOAL)
-
+    # test = Tree(None)
+    # test.load_tree("trees/" + "EntropyTree_clear_sky_1.txt")
+    # generate_graph(test)
 

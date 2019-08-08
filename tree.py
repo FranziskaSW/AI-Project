@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-# GOAL = "pickups"
-GOAL = "Goal"
+GOAL = "demand"
+# GOAL = "Goal"
 
 
 class Node:
@@ -30,9 +30,9 @@ class Tree:
     def __init__(self, records_df, limit=0, attributes=None, goal=GOAL):
         """creates the tree based on a dictionary of attributes and options"""
         self.limit = limit
-        self.rows = len(records_df)
         self.goal = goal
         if records_df is not None:
+            self.rows = len(records_df)
             self.root = self.create_tree(records_df, attributes)
         else:
             self.root = Node(None)
@@ -59,6 +59,7 @@ class Tree:
         if not attribute:
             attribute = self.goal
         if attribute != self.goal:
+            attributes.remove(attribute)
             if not path:
                 node = Node(attribute, depth=depth)
             else:
@@ -85,6 +86,8 @@ class Tree:
 
     def decide_leaf(self, records_df):
         """Decide the value of the leaf based on the records"""
+        if records_df.empty:
+            return None
         return records_df[self.goal].value_counts().argmax()
 
     def pruning(self, records_df, threshold):
@@ -249,12 +252,12 @@ def draw_tree(G):
     plt.show()
 
 
-# if __name__ == "__main__":
-#     data = pd.read_csv("dataa.csv")
-#     tree = Tree(data)
-#     G = generate_graph(tree)
-#     row = data.iloc[3, :]
-
+if __name__ == "__main__":
+    data = pd.read_csv("dataa.csv")
+    tree = Tree(data)
+    # G = generate_graph(tree)
+    # row = data.iloc[3, :]
+    #
     # path = os.getcwd()
     # sample = data.sample(1)
     # test.load_tree(path + "/trees/test.txt")
