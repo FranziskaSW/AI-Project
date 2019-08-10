@@ -36,6 +36,7 @@ class Tree:
             self.rows = len(records_df)
             self.root = self.create_tree(records_df, attributes)
         else:
+            self.rows = 0
             self.root = Node(None)
 
     def __del__(self):
@@ -143,7 +144,10 @@ class Tree:
         with open(path, 'rb') as file:
             node = pickle.load(file)
         self.root = node.root
-        self.name = path.split("/")[-1].split(".")[0]
+        self.name = node.name
+        self.goal = node.goal
+        self.rows = node.rows
+        self.limit = node.limit
 
 
 class EntropyTree(Tree):
