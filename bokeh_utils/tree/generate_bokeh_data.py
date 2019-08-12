@@ -1,6 +1,44 @@
 from bokeh_utils.tree.bucheim import tree_layout
 
 
+def tree_2_json(tree):
+    tree_dict = {
+        'metadata': {
+            'all_attr_list': [],
+            'attr_values_dict': {}
+        },
+        'tree': {
+            'attr_name': str(tree.root.data),
+            'choices': [],
+            'children': []
+        }
+    }
+    tree_2_json_recursive(tree.root, tree_dict['tree'], tree_dict['metadata'])
+    tree_dict['metadata']['all_attr_list'].append('Demand')
+
+    return tree_dict
+
+
+def tree_2_json_recursive(tree_node, dict_node, tree_metadata):
+    if tree_node.children:
+        for c in tree_node.children:
+            node = {
+                'attr_name': str(c.data),
+                'choices': [(str(ch[0]), str(ch[1])) for ch in c.choices],
+                'children': []
+            }
+            dict_node['children'].append(node)
+            tree_2_json_recursive(c, node, tree_metadata)
+    else:
+        for ch in [(str(ch[0]), str(ch[1])) for ch in tree_node.choices]:
+            if not tree_metadata['attr_values_dict'].get(ch[0], None):
+                tree_metadata['attr_values_dict'][ch[0]] = []
+            if ch[1] not in tree_metadata['attr_values_dict'][ch[0]]:
+                tree_metadata['attr_values_dict'][ch[0]].append(ch[1])
+            if ch[0] not in tree_metadata['all_attr_list']:
+                tree_metadata['all_attr_list'].append(ch[0])
+
+
 class Node(object):
     ''' Tree node '''
     def __init__(self, parent_name, name, data, children, rem_attr):
@@ -26,20 +64,14 @@ class Node(object):
 
 
 def get_depth(node, id_index, visited={}):
-    ''' Calculate depth of the tree '''
-    # if node.decision in data_instance.attr_values_dict[data_instance.attr_list[-1]]:
-    #     node.name = data_instance.attr_list[-1]
-
     if not node.children:
         node.depth = 1
-        # node.id = str(id_index)
         visited[node] = False
         id_index += 1
         return 1
 
     max_depth = max([get_depth(child, id_index, visited) for child in node.children])
 
-    # node.id = str(id_index)
     node.depth = max_depth + 1
     visited[node] = False
     id_index += 1
@@ -59,7 +91,6 @@ def get_width(node, level):
 
 
 def get_max_width(node, depth):
-    ''' Calculate max width of the tree '''
     max_width = 0
     h = depth
     level_widths = []
@@ -72,11 +103,8 @@ def get_max_width(node, depth):
 
 
 def generate_node_list(root, visited):
-    ''' Push tree node to the list according to the breadth first search '''
     node_list = []
-
     queue = [root]
-
     visited[root] = True
 
     while queue:
@@ -110,13 +138,16 @@ def fill_source(source, node_list):
 
 
 def generate_bokeh_tree(tree_obj, data_instance):
+    data_instance['nodes_map'] = {}
     bokeh_root = Node(parent_name='', name=str(tree_obj.root.data), data=[], children=[], rem_attr=set())
+
+    data_instance['nodes_map'][bokeh_root] = tree_obj.root
     bokeh_root.parentPointer = None
     data_instance['all_attr_list'] = set()
     data_instance['attr_values_dict'] = {}
     dfs(tree_obj.root, bokeh_root, [], data_instance)
     data_instance['all_attr_list'] = list(data_instance['all_attr_list'])
-    data_instance['all_attr_list'].append('Classes')
+    data_instance['all_attr_list'].append('Demand')
     return bokeh_root
 
 
@@ -125,15 +156,16 @@ def dfs(tree_node, bokeh_node, path, data_instance):
         bokeh_node.decision = str(tree_node.data)
         path.append(bokeh_node.decision)
         bokeh_node.data.append(path)
-        bokeh_node.name = 'Classes'
-        if not data_instance['attr_values_dict'].get('Classes', None):
-            data_instance['attr_values_dict']['Classes'] = set()
-        data_instance['attr_values_dict']['Classes'].add(bokeh_node.decision)
+        bokeh_node.name = 'Demand'
+        if not data_instance['attr_values_dict'].get('Demand', None):
+            data_instance['attr_values_dict']['Demand'] = set()
+        data_instance['attr_values_dict']['Demand'].add(bokeh_node.decision)
     else:
         data_instance['all_attr_list'].add(tree_node.data)
 
         for c in tree_node.children:
             bokeh_ch = Node(parent_name=str(bokeh_node.name), name=str(c.data), data=[], children=[], rem_attr=set())
+            data_instance['nodes_map'][bokeh_ch] = c
             bokeh_ch.parentPointer = bokeh_node
             bokeh_node.children.append(bokeh_ch)
             dfs(c, bokeh_ch, path+[str(c.choices[-1][1])], data_instance)
@@ -181,4 +213,4 @@ def get_bokeh_data(tree_obj, data_instance):
     fill_source(source, node_list)
     width = max([node.coord[1] for node in node_list])
 
-    return source, depth, int(width), level_width, acc
+    return source, depth, int(width), level_width, acc, node_list
