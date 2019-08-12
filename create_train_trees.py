@@ -2,9 +2,13 @@ from tree import *
 import pandas as pd
 import math
 from multiprocessing import Pool
+from os import listdir
+from os.path import isfile, join
 
 
 INPUT_PATH = "data/training_data_1.csv"
+TEST_PATH = "data/test_data_1.csv"
+TRAINING_SET = "1"
 # INPUT_PATH = "dataa.csv"
 GOAL = "demand"
 # GOAL = "Goal"
@@ -14,7 +18,7 @@ TREE = "Tree"
 ENTROPY = "EntropyTree"
 INFORMATION_GAIN = "InformationGainTree"
 INFORMATION_RATIO = "InformationRatioTree"
-TRAINING_SET = "1"
+
 
 BASIC_ATTRIBUTES = ["L1", "L2", "time"]
 IGNORE_LIST = BASIC_ATTRIBUTES + ["Unnamed: 0", "Unnamed: 0.1", "cluster_id",
@@ -75,14 +79,15 @@ def create_trees(training_data, goal):
 def create_file(test_data, all_trees, goal):
     """This function generates a file with the results of each tree and the
     actual result per line in the test data"""
-    columns = ["tree" + str(i) for i in range(len(all_trees))]
+    columns = [t.name for t in all_trees]
     columns.append(goal)
     output = pd.DataFrame(columns=columns)
     for i in range(len(test_data)):
+        print(i / len(test_data))
         row_dict = dict()
         row = test_data.iloc[i, :]
         for t in all_trees:
-            row_dict["tree" + str(all_trees.index(t))] = t.get_val(row)
+            row_dict[t.name] = t.get_val(row)
         row_dict[goal] = row[goal]
         output = output.append(pd.DataFrame.from_dict([row_dict]))
     output.to_csv("testing_by_tree_" + TRAINING_SET + ".csv")
@@ -132,22 +137,41 @@ def additional_trees(training_data, goal):
     p.join()
 
 
+def get_tree_files():
+    onlyfiles = [f for f in listdir("trees") if
+             isfile(join("trees", f)) and TRAINING_SET in f]
+    return onlyfiles
+
+
+def load_all_trees():
+    files = get_tree_files()
+    trees = []
+    for file in files:
+        new_tree = Tree(None)
+        new_tree.load_tree("trees/" + file)
+        trees.append(new_tree)
+    return trees
+
+
 if __name__ == "__main__":
     # data = pd.read_csv(INPUT_PATH)
     # training_data = data.sample(math.ceil(len(data) * TRAIN_LEVEL))
     #
     # test_data = data[~data.isin(training_data)].dropna()
     # training_data = load_data("data/training_data_1.csv")
-    training_data = pd.read_csv(INPUT_PATH)
+    # training_data = pd.read_csv(INPUT_PATH)
     # create trees based on training data
-    create_trees(training_data, GOAL)
-    additional_trees(training_data, GOAL)
+    # create_trees(training_data, GOAL)
+    # additional_trees(training_data, GOAL)
     # export_trees(all_trees)
 
     # create file
     # create_file(test_data, all_trees, GOAL)
     # test = Tree(None)
-    # test.load_tree("trees/" + "EntropyTree_clear_sky_1.txt")
+    # test.load_tree("trees/" + "EntropyTree_extreme_weather_clear_sky_weekday_1.txt")
     # generate_graph(test)
     # print(test.name)
+    all_trees = load_all_trees()
+    test_data = pd.read_csv(TEST_PATH)
+    create_file(test_data, all_trees, GOAL)
 
