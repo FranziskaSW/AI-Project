@@ -82,15 +82,28 @@ def create_file(test_data, all_trees, goal):
     columns = [t.name for t in all_trees]
     columns.append(goal)
     output = pd.DataFrame(columns=columns)
-    for i in range(len(test_data)):
-        print(i / len(test_data))
+    counter = 0
+    #     for i in range(len(test_data)):
+    #         print(str(i) + " out of " + str(len(test_data)), len(output))
+    while not test_data.empty:
+        test_data, row = test_data.iloc[1:], test_data.head(1)
+        print(len(test_data), len(output))
         row_dict = dict()
-        row = test_data.iloc[i, :]
+        #         row = test_data.iloc[i, :]
         for t in all_trees:
             row_dict[t.name] = t.get_val(row)
         row_dict[goal] = row[goal]
         output = output.append(pd.DataFrame.from_dict([row_dict]))
-    output.to_csv("testing_by_tree_" + TRAINING_SET + ".csv")
+        if len(output) >= 10000:
+            output.to_csv("data/testing_by_tree" + TRAINING_SET + "_part_" + str(
+                    counter) + ".csv")
+            counter += 1
+            del output
+            output = pd.DataFrame(columns=columns)
+        del row
+    if not output.empty:
+        output.to_csv("data/testing_by_tree" + TRAINING_SET + "_part_" + str(
+                counter) + ".csv")
 
 
 def export_trees(all_trees):
@@ -172,6 +185,8 @@ if __name__ == "__main__":
     # generate_graph(test)
     # print(test.name)
     all_trees = load_all_trees()
+    print("uploaded trees")
     test_data = pd.read_csv(TEST_PATH)
+    print("loaded test data")
     create_file(test_data, all_trees, GOAL)
 
