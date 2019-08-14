@@ -1,4 +1,5 @@
 folder_path = '/home/franzi/briedenCloud/share/data/'
+folder_path_subsets = '/home/franzi/briedenCloud/share/data/subsets/'
 
 #################### add the new columns
 method = 'test'
@@ -38,4 +39,4 @@ for i in [1]:
         last = int(slicer[ind+1] - 1)
         # print(str(ind).zfill(4), first, last)
         subset = data.iloc[first:last]
-        subset.to_csv(folder_path + 'subsets/test_data_' + str(i) + '_' + str(ind).zfill(4) + '.csv')
+        subset.to_csv(folder_path_subsets + 'test_data_' + str(i) + '_' + str(ind).zfill(4) + '.csv')
