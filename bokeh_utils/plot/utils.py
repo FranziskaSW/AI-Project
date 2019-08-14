@@ -3,7 +3,7 @@ from bokeh.plotting import figure
 from bokeh.transform import factor_cmap
 from math import atan, pi
 from bokeh_utils.tree.generate_bokeh_data import get_bokeh_data
-from bokeh_utils.plot.get_data import get_all_colors
+from bokeh_utils.plot.colors import get_all_colors
 import pandas as pd
 
 
