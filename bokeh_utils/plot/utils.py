@@ -8,42 +8,28 @@ import pandas as pd
 
 
 TOOLTIPS = [
-    ("Gini Index Value", "@{nonLeafNodes_stat}"),
-    ("instance Number", "@{instances}"),
     ("Decision", "@{decision}")
 ]
 
 
-def create_plot(depth, level_width, acc, x, y, data_source, instance):
-    ''' create glyphs, text and arrows and insert them into the figures
-    Args:
-        depth: maximum width of tree
-        level_width: list of width of each level
-        acc: accuracy of tree
-        y: y coordinates of nodes
-        x: x coordinates of nodes
-        data_source: data source to be used
-        instance: data class
-    Returns:
-        plot p
-    '''
+def create_plot(depth, level_width, acc, x, y, data_source, instance, node_list):
     circle_radius = 5
-    title = "Decision Tree " + ("\t\t\t\tAccuracy (%): " + str(round(acc * 100, 1))) \
-                                + "   (Test Size: " + str('not available') + ", " \
-                                + "Train Size: " + str('not available') + ")"
+    # title = "Decision Tree " + ("\t\t\t\tAccuracy (%): " + str(round(acc * 100, 1))) \
+    #                             + "   (Test Size: " + str('not available') + ", " \
+    #                             + "Train Size: " + str('not available') + ")"
     hover = HoverTool(names=["circles"])
     wheel = WheelZoomTool()
     wheel.zoom_on_axis = False
-    p = figure(title=title, toolbar_location=None, tools=[hover, wheel, ResetTool(), PanTool()],
+    p = figure(width=750, tools=[hover, wheel, ResetTool(), PanTool()],
                x_range=x, y_range=list(y),
                tooltips=TOOLTIPS)
-    _, label = draw_arrow(depth, level_width, x, y, data_source.data, p, instance)
+    _, label = draw_arrow(depth, level_width, x, y, data_source.data, p, instance, node_list)
     p.add_layout(label)
     p.circle("y", "x", radius=circle_radius, radius_units='screen',
              source=data_source,
              name="circles", legend="attribute_type",
              color=factor_cmap('attribute_type',
-                               palette=get_all_colors(), factors=instance.all_attr_list))
+                               palette=get_all_colors(), factors=instance['all_attr_list']))
     # Final settings
     p.axis.visible = False
     p.toolbar.active_scroll = wheel
@@ -53,28 +39,15 @@ def create_plot(depth, level_width, acc, x, y, data_source, instance):
     return p
 
 
-def draw_arrow(depth, level_width, x, y, source, p, instance, mode="draw"):
-    ''' draws and returns arrows and the labels. calculates arrow widths from number of instances
-    Args:
-        depth: maximum width of tree
-        level_width: list of width of each level
-        y: y coordinates of nodes
-        x: x coordinates of nodes
-        source (ColumnDataSource) : source
-        p: plot p to be drawn on
-        instance: data class
-        mode: select between getting arrow data or drawing them
-    Returns:
-        arrow data source and arrow labels
-    '''
+def draw_arrow(depth, level_width, x, y, source, p, instance, node_list, mode="draw"):
     arrow_coordinates = {"x_start": [], "x_end": [], "y_start": [], "y_end": [], "x_avg": [], "y_avg": [],
                          "label_name": [], "instances": [], "angle": [], "xs": [], "ys": []}
     for i in range(depth):
         x_offset = 0
         for j in range(level_width[i]):
             offset = sum(level_width[:i])
-            if source["attribute_type"][offset + j] != 'Classes':
-                children_names = list(instance['attr_values_dict'][source["attribute_type"][offset + j]])
+            if source["attribute_type"][offset + j] != 'Demand':
+                children_names = [str(c.choices[-1][1]) for c in instance['nodes_map'][node_list[offset + j]].children]
                 number_of_children = len(children_names)
                 for index in range(number_of_children):
                     x_start = source["y"][offset + j]

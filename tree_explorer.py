@@ -4,10 +4,11 @@ from bokeh.io import curdoc
 from bokeh.layouts import layout, widgetbox
 from bokeh_utils.plot.get_data import set_new_dataset
 from bokeh_utils.plot.utils import create_plot, get_new_data_source, modify_individual_plot
-from bokeh_utils.tree.generate_bokeh_data import get_bokeh_data
+from bokeh_utils.tree.generate_bokeh_data import get_bokeh_data, tree_2_json
 from tree import *
 import pandas as pd
 from os import listdir
+import json
 
 trees_path = './data/Trees/'
 files = [f for f in listdir(trees_path)]
@@ -15,6 +16,8 @@ files = [f for f in listdir(trees_path)]
 tree = Tree(None)
 tree.load_tree(''.join([trees_path, files[26]]))
 
+# with open(''.join([trees_path, files[26], '.json']), 'w') as fp:
+#     json.dump(tree_2_json(tree), fp, indent=2)
 
 # tree = set_new_dataset("lens")
 
@@ -65,7 +68,7 @@ def create_figure():
     # active_attributes_list = [attr for attr in tree.attr_list if attr != tree.attr_list[-1]]
     instance = {}
 
-    source, depth, width, level_width, acc = get_bokeh_data(tree, instance)
+    source, depth, width, level_width, acc, node_list = get_bokeh_data(tree, instance)
     y = [str(i) for i in range(0, depth+1)]
     x = [str(x) for x in range(0, width+2)]
 
@@ -74,26 +77,23 @@ def create_figure():
     get_new_data_source(df)
     data_source = ColumnDataSource(data=df)
 
-    p = create_plot(depth, level_width, acc, x, y, data_source, instance)
+    p = create_plot(depth, level_width, acc, x, y, data_source, instance, node_list)
 
     best_root_plot_data = data_source.data.copy()
     best_root_plot_data_source = ColumnDataSource(data=best_root_plot_data)
-    best_root_plot = create_plot(depth, level_width, acc, x, y, best_root_plot_data_source, instance)
-    p.select(name="decision_text").visible = False
-    best_root_plot.select(name="decision_text").visible = False
-    p.select(name="arrowLabels").visible = False
-    best_root_plot.select(name="arrowLabels").visible = False
+    best_root_plot = create_plot(depth, level_width, acc, x, y, best_root_plot_data_source, instance, node_list)
+    p.select(name="decision_text").visible = True
+    best_root_plot.select(name="decision_text").visible = True
+    p.select(name="arrowLabels").visible = True
+    best_root_plot.select(name="arrowLabels").visible = True
     tab1 = Panel(child=p, title="Tree 1")
     tab2 = Panel(child=best_root_plot, title="Tree 2")
-    # tab3 = Panel(child=p, title="Tree Method 3")
-    # tab4 = Panel(child=best_root_plot, title="Tree Method 4")
     tree_tab = Tabs(tabs=[tab1, tab2], width=p.plot_width)
-    change_dataset("", "", "lens")
 
     widgets = widgetbox(tree_select, attr_info, attribute_checkbox, apply_changes_button,
-                        sizing_mode="stretch_both")
+                        sizing_mode="stretch_both", width=500)
 
-    main_frame = layout([[widgets, tree_tab]])
+    main_frame = layout([[widgets, tree_tab]], sizing_mode="fixed")
     return main_frame
 
 
