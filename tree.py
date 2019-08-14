@@ -127,8 +127,9 @@ class Tree:
                 return None
             children = prev_node.children
             for child in children:
-                if not df_row[df_row[prev_node.data] == child.choices[-1][1]].empty:
-                    print(child.choices[-1][1], df_row[prev_node.data])
+                if df_row[prev_node.data] == child.choices[-1][1]:
+                # if not df_row[df_row[prev_node.data] == child.choices[-1][1]].empty:
+                    # print(child.choices[-1][1], df_row[prev_node.data])
                     node = child
                     break
                 else:

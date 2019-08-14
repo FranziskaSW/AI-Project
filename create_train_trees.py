@@ -6,8 +6,8 @@ from os import listdir
 from os.path import isfile, join
 
 
-INPUT_PATH = "data/training_data_1.csv"
-TEST_PATH = "data/test_data_1.csv"
+INPUT_PATH = "data/training_data_1-all.csv"
+TEST_PATH = "data/test_data_1_0000.csv"
 TRAINING_SET = "1"
 # INPUT_PATH = "dataa.csv"
 GOAL = "demand"
@@ -76,34 +76,25 @@ def create_trees(training_data, goal):
     p.join()
 
 
-def create_file(test_data, all_trees, goal):
+
+def create_file(test_data, all_trees, goal, part):
     """This function generates a file with the results of each tree and the
     actual result per line in the test data"""
     columns = [t.name for t in all_trees]
     columns.append(goal)
     output = pd.DataFrame(columns=columns)
-    counter = 0
-    #     for i in range(len(test_data)):
-    #         print(str(i) + " out of " + str(len(test_data)), len(output))
+#     for i in range(len(test_data)):
+#         print(str(i) + " out of " + str(len(test_data)), len(output))
     while not test_data.empty:
         test_data, row = test_data.iloc[1:], test_data.head(1)
-        print(len(test_data), len(output))
-        row_dict = dict()
-        #         row = test_data.iloc[i, :]
-        for t in all_trees:
-            row_dict[t.name] = t.get_val(row)
+        print(part, len(test_data), len(output))
+        row_dict = {t.name: t.get_val(row) for t in all_trees}
         row_dict[goal] = row[goal]
         output = output.append(pd.DataFrame.from_dict([row_dict]))
-        if len(output) >= 10000:
-            output.to_csv("data/testing_by_tree" + TRAINING_SET + "_part_" + str(
-                    counter) + ".csv")
-            counter += 1
-            del output
-            output = pd.DataFrame(columns=columns)
         del row
+        break
     if not output.empty:
-        output.to_csv("data/testing_by_tree" + TRAINING_SET + "_part_" + str(
-                counter) + ".csv")
+        output.to_csv("data/testing_by_tree_" + TRAINING_SET + "_" + str(part) + ".csv")
 
 
 def export_trees(all_trees):
@@ -129,10 +120,11 @@ def additional_trees(training_data, goal):
     # every tree we want to create has to come in the format of
     # (type, df, limit, attributes, goal)
     new_basic = BASIC_ATTRIBUTES + ["weekday"]
-    attr_list = [new_basic + ["month"]]
-    attr_list.append(new_basic + ["clear_sky"])
-    attr_list.append(new_basic + ["extreme_weather"])
-    attr_list.append(new_basic + ["clear_sky", "extreme_weather"])
+    # attr_list = [new_basic + ["month"]]
+    # attr_list.append(new_basic + ["clear_sky"])
+    # attr_list.append(new_basic + ["extreme_weather"])
+    # attr_list.append(new_basic + ["clear_sky", "extreme_weather"])
+    attr_list = [new_basic + ["clear_sky", "extreme_weather"]]
     for lst in attr_list:
         filename = "_".join(list(set(lst) - set(BASIC_ATTRIBUTES)))
         trees = [(TREE, training_data, 0, lst, goal,
@@ -159,11 +151,49 @@ def get_tree_files():
 def load_all_trees():
     files = get_tree_files()
     trees = []
+    # path = ""
+    # name = "_clear_sky_weekday_extreme_weather_1.txt"
+    # files = [path + TREE + name, path + ENTROPY + name, path + INFORMATION_GAIN + name, path + INFORMATION_RATIO + name]
     for file in files:
         new_tree = Tree(None)
         new_tree.load_tree("trees/" + file)
         trees.append(new_tree)
     return trees
+
+
+def change_numeric_to_format(data):
+    for col in data.columns:
+        if np.issubdtype(data[col].dtype, np.floating):
+            data[col] = data[col].apply(lambda x: int(x))
+        else:
+            continue
+
+
+def change_numeric_to_format(data):
+    for col in data.columns:
+        if np.issubdtype(data[col].dtype, np.floating):
+            data[col] = data[col].apply(lambda x: int(x))
+        else:
+            continue
+
+TEST_START = "Subsets/test_data_"
+
+
+def generate_file_for_part(tup):
+    all_trees, part = tup
+    test_data = pd.read_csv(TEST_START + TRAINING_SET + "_" + part + ".csv")
+    change_numeric_to_format(test_data)
+    create_file(test_data, all_trees, GOAL, part)
+    del test_data
+
+
+def generate_range():
+    start = 0
+    end = 9
+    test_range = []
+    for i in range(start, end + 1):
+        test_range.append("0" * (4 - len(str(i))) + str(i))
+    return test_range
 
 
 if __name__ == "__main__":
@@ -186,7 +216,15 @@ if __name__ == "__main__":
     # print(test.name)
     all_trees = load_all_trees()
     print("uploaded trees")
-    test_data = pd.read_csv(TEST_PATH)
+    # test_data = pd.read_csv(TEST_PATH)
+    # change_numeric_to_format(test_data)
     print("loaded test data")
-    create_file(test_data, all_trees, GOAL)
+    range_value = generate_range()
+    test_range = [(all_trees, range_value[i]) for i in range(len(range_value))]
+    # p = Pool(2)
+    # p.map(generate_file_for_part, test_range)
+    # p.close()
+    # p.join()
+    for val in test_range:
+        generate_file_for_part(val)
 
