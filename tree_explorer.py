@@ -1,5 +1,5 @@
 from bokeh.models import ColumnDataSource
-from bokeh.models.widgets import Select
+from bokeh.models.widgets import Select, Dropdown
 from bokeh.io import curdoc
 from bokeh.layouts import layout, widgetbox
 from bokeh_utils.plot.utils import create_plot, get_new_data_source
@@ -13,26 +13,32 @@ trees_path = './data/Trees/'
 files = [f for f in listdir(trees_path)]
 
 tree = Tree(None)
-tree.load_tree(''.join([trees_path, files[26]]))
+tree.load_tree(''.join([trees_path, files[25]]))
 
-# with open(''.join([trees_path, files[26], '.json']), 'w') as fp:
-#     json.dump(tree_2_json(tree), fp, indent=2)
+tree_names_map = {
+    'EntropyTree': {},
+    'InformationGainTree': {},
+    'InformationRatioTree': {},
+    'Tree': {}
+}
 
-entropy = Select(title="Entropy Trees:")
-entropy.options = list(set(['None'] + [' '.join(f.split('.')[0].split('_')[:-1]) for f in files]))
 
-infogain = Select(title="Information Gain Trees:")
-infogain.options = list(set(['None'] + [' '.join(f.split('.')[0].split('_')[:-1]) for f in files]))
+def map_manes(path):
+    f = path.split('.')[0].split('_')
+    tree_names_map[f[0]][' '.join(f[1:])] = path
 
-inforatio = Select(title="Information Ratio Trees:")
-inforatio.options = list(set(['None'] + [' '.join(f.split('.')[0].split('_')[:-1]) for f in files]))
+
+list(map(map_manes, files))
+
+entropy = Dropdown(label="Entropy Trees", button_type="success", menu=list(tree_names_map['EntropyTree'].items()))
+infogain = Dropdown(label="Information Gain Trees", button_type="success", menu=list(tree_names_map['InformationGainTree'].items()))
+inforatio = Dropdown(label="Information Ratio Trees", button_type="success", menu=list(tree_names_map['InformationRatioTree'].items()))
 
 
 def change_tree(_attr, _old, new):
-    global selected_root, tree
+    global tree, trees_path
     tree = Tree(None)
-    tree.load_tree(''.join([trees_path, files[27]]))
-    print(_attr, _old, new)
+    tree.load_tree(''.join([trees_path, new]))
 
     # attribute_checkbox.labels = [attr for attr in tree.attr_list if attr != tree.attr_list[-1]]
     # # attribute_checkbox.active = [i for i, attr in enumerate(tree.attr_list)]
@@ -45,7 +51,9 @@ def change_tree(_attr, _old, new):
     # apply_changes_button.disabled = False
 
 
-# tree_select.on_change('value', change_tree)
+entropy.on_change('value', change_tree)
+infogain.on_change('value', change_tree)
+inforatio.on_change('value', change_tree)
 
 
 def create_figure():
@@ -67,7 +75,7 @@ def create_figure():
 
     p.select(name="decision_text").visible = True
     p.select(name="arrowLabels").visible = True
-    widgets = widgetbox(entropy, infogain, inforatio, sizing_mode="stretch_both", width=500)
+    widgets = widgetbox(entropy, infogain, inforatio, sizing_mode="stretch_both")
 
     main_frame = layout([[widgets, p]], sizing_mode="fixed")
     return main_frame
