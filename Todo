@@ -1,27 +1,26 @@
-https://www.capitalbikeshare.com/system-data
+Fran:
+    generate a file for the map
+    concatenate all exported files from trees
+    report
+    readme - data part
+
+Alon:
+    UI for trees
+    UI for map
+
+Ben:
+    Run ANN
+    Run trained ANN on rows
+
+Kfir:
+    readme - trees
+    ideas for video, video editing
 
 
-Current Flow:
-Get all data for everyone
-Create training and test data - use the same in every computer
-Create the trees based on the training data:
-    Should we split the data?
-    Need to decide on attributes for special trees
-    Same trees for everyone?
-Train NN:
-    multiple training
-    change parameters
-Visualization - whether in real time?
-Report
-Video
-
-
-Tasks:
-Create visualization for end product & trees
-Trees Ideas:
-    clusters+time
-    clusters+time+weather
-    clusters+time+holiday
-    clusters+time+month
-    clusters+time+weekday
-    clusters+time+humidity
+Video ideas:
+	Show the bikes website and explain a bit on it
+	We want to have less bikes sitting still and prevent a station that doesn't have bikes at all
+	We got info from previous year, and manipulated it. 
+	we take half of it, create decision trees based on entropy, information gain and information gain ratio.
+	We then train an NN to create a combination of the tree's results.
+	
