@@ -9,7 +9,7 @@ import pandas as pd
 from os import listdir
 import json
 
-trees_path = './data/Trees/'
+trees_path = './bokeh_utils/trees_for_visualization/'
 files = [f for f in listdir(trees_path)]
 
 tree_names_map = {
@@ -21,7 +21,7 @@ tree_names_map = {
 
 
 def map_manes(path):
-    f = path.split('.')[0].split('_')[:-1]
+    f = path.split('.')[0].split('_')
     tree_names_map[f[0]][' '.join(f[1:])] = path
 
 

@@ -41,7 +41,7 @@ def merc_y(lat):
     return y
 
 
-data_for_map = pd.read_pickle("./data/data_for_map.pkl").dropna()
+data_for_map = pd.read_pickle("./bokeh_utils/data_for_map.pkl").dropna()
 # data_for_map['demand'] = (np.random.randint(20, size=len(data_for_map)) - 10)
 data_for_map['demand'] = data_for_map['demand'].astype(int).astype(str)
 data_for_map['time'] = data_for_map['time'].apply(lambda x: datetime.datetime.strptime(str(x), '%H:%M:%S').time())
