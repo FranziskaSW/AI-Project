@@ -3,7 +3,7 @@ from bokeh.plotting import figure
 from bokeh.transform import factor_cmap
 from math import atan, pi
 from bokeh_utils.tree.generate_bokeh_data import get_bokeh_data
-from bokeh_utils.plot.get_data import get_all_colors
+from bokeh_utils.plot.colors import get_all_colors
 import pandas as pd
 
 
@@ -20,7 +20,7 @@ def create_plot(depth, level_width, acc, x, y, data_source, instance, node_list)
     hover = HoverTool(names=["circles"])
     wheel = WheelZoomTool()
     wheel.zoom_on_axis = False
-    p = figure(width=750, tools=[hover, wheel, ResetTool(), PanTool()],
+    p = figure(width=900, tools=[hover, wheel, ResetTool(), PanTool()],
                x_range=x, y_range=list(y),
                tooltips=TOOLTIPS)
     _, label = draw_arrow(depth, level_width, x, y, data_source.data, p, instance, node_list)
