@@ -1,16 +1,13 @@
 import copy
-import pandas as pd
-import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
-import os
 
 GOAL = "demand"
-# GOAL = "Goal"
 
 
 class Node:
+    """This class represents the nodes of the trees, where the data is the
+    value (for leaves) or attribute otherwise, choices represents the path"""
     def __init__(self, data, choices=None, depth=0):
         self.data = data
         self.choices = choices
@@ -21,9 +18,6 @@ class Node:
         for child in self.children:
             del child
         del self.children
-
-    def add_children(self, children):
-        self.children = children
 
 
 class Tree:
@@ -74,7 +68,7 @@ class Tree:
                 remaining = copy.deepcopy(attributes)
                 children.append(self.recursive_build(new_data, remaining,
                                                      new_path, depth + 1))
-            node.add_children(children)
+            node.children = children
         else:
             node = Node(self.decide_leaf(records_df), path, depth=depth)
         return node
@@ -116,20 +110,18 @@ class Tree:
             for child in children_append:
                 node.children.append(child)
 
-    def get_val(self, df_row):
+    def get_val(self, row):
         """Gets the relevant node based on the row"""
         node = self.root
         while node:
             prev_node = node
             if not len(node.children):
                 return node.data
-            if node.data not in df_row.keys():
+            if node.data not in row.keys():
                 return None
             children = prev_node.children
             for child in children:
-                if df_row[prev_node.data] == child.choices[-1][1]:
-                # if not df_row[df_row[prev_node.data] == child.choices[-1][1]].empty:
-                    # print(child.choices[-1][1], df_row[prev_node.data])
+                if row[prev_node.data] == child.choices[-1][1]:
                     node = child
                     break
                 else:
@@ -206,69 +198,3 @@ def information_gain(attribute_list, records_df, goal=GOAL):
             remaining_entropy += -(np.sum(p * np.log2(p) * len(relevant)) / len(records_df))
         info_gain[attribute] = goal_entropy - remaining_entropy
     return info_gain
-
-
-def generate_graph(tree):
-    """Generate a graph from the tree"""
-    G = nx.DiGraph()
-    nodes_left = [(tree.root, None)]
-    labels = {}
-    edge_labels = {}
-    pos = dict()
-    max_row = dict()
-    while nodes_left:
-        cur_node, cur_parent = nodes_left.pop()
-        if cur_node.choices:
-            node_name = ''.join(
-                str(tup[0]) + str(tup[1]) for tup in cur_node.choices)
-        else:
-            node_name = cur_node.data
-        if cur_node.depth in max_row.keys():
-            max_row[cur_node.depth] += 1
-        else:
-            max_row[cur_node.depth] = 0
-        pos[node_name] = (cur_node.depth, max_row[cur_node.depth])
-        G.add_node(node_name)
-        if cur_parent:
-            G.add_edge(cur_parent, node_name)
-            edge_labels[(cur_parent, node_name)] = cur_node.choices[-1][1]
-        labels[node_name] = cur_node.data
-        nodes_left.extend([(child, node_name) for child in cur_node.children])
-
-    nx.draw(G, pos)
-    nx.draw_networkx_labels(G, pos, labels, font_size=16)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=16)
-    plt.axis('off')
-    plt.show()
-    return G
-
-
-def draw_tree(G):
-    """Draw the tree"""
-    pos = nx.spring_layout(G)
-    labels = {}
-    for node in G.nodes():
-        labels[node] = node
-    edge_labels = {}
-    for edge in G.edges:
-        edge_labels[edge] = 0
-    nx.draw_networkx_nodes(G, pos, G.nodes)
-    nx.draw_networkx_labels(G, pos, labels, font_size=1)
-    nx.draw_networkx_edges(G, pos, G.edges)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=1)
-    plt.axis('off')
-    plt.show()
-
-
-if __name__ == "__main__":
-    data = pd.read_csv("dataa.csv")
-    tree = Tree(data)
-    # G = generate_graph(tree)
-    # row = data.iloc[3, :]
-    #
-    # path = os.getcwd()
-    # sample = data.sample(1)
-    # test.load_tree(path + "/trees/test.txt")
-    # print(sample)
-    # print(test.get_val(sample))
-    # test.save_tree(path + "/trees/test.txt")
