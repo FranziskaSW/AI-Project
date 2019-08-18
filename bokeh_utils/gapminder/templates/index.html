@@ -1,0 +1,23 @@
+{% extends base %}
+
+{% block title %}Demand Evolvement During Day{% endblock %}
+
+{% block postamble %}
+  <style>
+    {% include 'styles.css' %}
+  </style>
+{% endblock %}
+
+{% block contents %}
+  <div class="content">
+    <h1>Titler</h1>
+
+    <p>Explaination</p>
+
+    {{ super() }}
+
+    <p>You can skip ahead to 3m 58s to see him talking through the plot we've
+    just made. Or sit back and enjoy a great example of statistics
+    communication.</p>
+  </div>
+{% endblock %}
