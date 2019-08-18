@@ -5,13 +5,13 @@ import pandas as pd
 from bokeh.tile_providers import get_provider, Vendors
 from bokeh.io import curdoc
 from bokeh.layouts import layout
-from bokeh.models import (ColumnDataSource, HoverTool, SingleIntervalTicker, Slider, Button, Label, CategoricalColorMapper)
+from bokeh.models import (ColumnDataSource, HoverTool, Slider, Button, Label, CategoricalColorMapper)
 from bokeh.plotting import figure
 import numpy as np
 import math
 
 
-cmap = cm.get_cmap('seismic_r', 65)
+cmap = cm.get_cmap('seismic_r', 60)
 pallete = []
 
 for i in range(cmap.N):
@@ -41,11 +41,13 @@ def merc_y(lat):
     return y
 
 
-data_for_map = pd.read_pickle("./data/data_for_map.pkl")
-data_for_map['demand'] = (np.random.randint(20, size=len(data_for_map)) - 10)
-data_for_map['demand'] = data_for_map['demand'].astype(str)
-data_for_map['longitude'] = data_for_map['longitude'].apply(lambda x: merc_x(x))
-data_for_map['latitude'] = data_for_map['latitude'].apply(lambda y: merc_y(y))
+data_for_map = pd.read_pickle("./data/data_for_map.pkl").dropna()
+# data_for_map['demand'] = (np.random.randint(20, size=len(data_for_map)) - 10)
+data_for_map['demand'] = data_for_map['demand'].astype(int).astype(str)
+data_for_map['time'] = data_for_map['time'].apply(lambda x: datetime.datetime.strptime(str(x), '%H:%M:%S').time())
+
+# data_for_map['longitude'] = data_for_map['longitude'].apply(lambda x: merc_x(x))
+# data_for_map['latitude'] = data_for_map['latitude'].apply(lambda y: merc_y(y))
 
 
 data = {
@@ -81,7 +83,7 @@ def animate():
     global callback_id
     if play.label == '► Play':
         play.label = '❚❚ Pause'
-        callback_id = curdoc().add_periodic_callback(animate_update, 200)
+        callback_id = curdoc().add_periodic_callback(animate_update, 800)
     else:
         play.label = '► Play'
         curdoc().remove_periodic_callback(callback_id)

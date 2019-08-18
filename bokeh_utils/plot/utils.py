@@ -23,7 +23,7 @@ def create_plot(depth, level_width, acc, x, y, data_source, instance, node_list)
     p = figure(width=900, tools=[hover, wheel, ResetTool(), PanTool()],
                x_range=x, y_range=list(y),
                tooltips=TOOLTIPS)
-    _, label = draw_arrow(depth, level_width, x, y, data_source.data, p, instance, node_list)
+    arrow_dc, label, _ = draw_arrow(depth, level_width, x, y, data_source.data, p, instance, node_list)
     p.add_layout(label)
     p.circle("y", "x", radius=circle_radius, radius_units='screen',
              source=data_source,
@@ -36,7 +36,7 @@ def create_plot(depth, level_width, acc, x, y, data_source, instance, node_list)
     p.outline_line_color = "white"
     p.grid.grid_line_color = None
     p.axis.axis_line_color = None
-    return p
+    return p, arrow_dc
 
 
 def draw_arrow(depth, level_width, x, y, source, p, instance, node_list, mode="draw"):
@@ -90,7 +90,7 @@ def draw_arrow(depth, level_width, x, y, source, p, instance, node_list, mode="d
     label = LabelSet(x='x_avg', y='y_avg', angle="angle",
                      name="arrowLabels", text="label_name",
                      text_font_size="8pt", text_color="darkgray", source=arrow_data_source, text_align="center")
-    return arrow_data_source, label
+    return arrow_data_source, label, pd.DataFrame.from_dict(arrow_coordinates)
 
 
 def get_new_data_source(df):
