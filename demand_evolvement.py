@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
+from pylab import *
 import datetime
 import pandas as pd
 from bokeh.tile_providers import get_provider, Vendors
 from bokeh.io import curdoc
 from bokeh.layouts import layout
 from bokeh.models import (ColumnDataSource, HoverTool, SingleIntervalTicker, Slider, Button, Label, CategoricalColorMapper)
-from bokeh.palettes import Viridis as palette
 from bokeh.plotting import figure
 import numpy as np
 import math
+
+
+cmap = cm.get_cmap('seismic_r', 65)
+pallete = []
+
+for i in range(cmap.N):
+    rgb = cmap(i)[:3]
+    pallete.append(matplotlib.colors.rgb2hex(rgb))
 
 
 def merc_x(lon):
@@ -65,7 +73,7 @@ def animate_update():
 
 def slider_update(attrname, old, new):
     hour = slider.value
-    label.text = 'time: {}, temperature: {}°F'.format(str(int_to_hourtime(hour)), str(current_plot_data[int_to_hourtime(hour)]['temp'][0]))
+    label.text = 'Time: {}, Temperature: {}°F'.format(str(int_to_hourtime(hour)), str(current_plot_data[int_to_hourtime(hour)]['temp'][0]))
     source.data = current_plot_data[int_to_hourtime(hour)]
 
 
@@ -84,7 +92,7 @@ def load_plot(title):
     current_plot_data = plots_data[title]
     hourtime_to_int(hours[0])
     slider.value = hourtime_to_int(hours[0])
-    label.text = label.text = 'time: {}, temperature: {}°F'.format(str(int_to_hourtime(hour)), str(current_plot_data[int_to_hourtime(hour)]['temp'][0]))
+    label.text = label.text = 'Time: {}, Temperature: {}°F'.format(str(int_to_hourtime(hour)), str(current_plot_data[int_to_hourtime(hour)]['temp'][0]))
     source.data = current_plot_data[hours[0]]
 
 
@@ -109,10 +117,10 @@ plot = figure(title='Demand Evolve', plot_height=500, plot_width=900)
 plot.xaxis.axis_label = "Longitude"
 plot.yaxis.axis_label = "Latitude"
 
-label = Label(x=min(source.data['longitude']), y=min(source.data['latitude']), text='time: {}, temperature: {}°F'.format(str(hours[0]), str(source.data['temp'][0])), text_font_size='25pt')
+label = Label(x=min(source.data['longitude']), y=min(source.data['latitude']), text='Time: {}, Temperature: {}°F'.format(str(hours[0]), str(source.data['temp'][0])), text_font_size='25pt')
 plot.add_layout(label)
 
-color_mapper = CategoricalColorMapper(palette=palette[256], factors=[str(x) for x in range(-32, 32)])
+color_mapper = CategoricalColorMapper(palette=pallete, factors=[str(x) for x in range(-32, 32)])
 plot.circle(
     x='longitude',
     y='latitude',
