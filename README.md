@@ -1,13 +1,7 @@
 # Bike Sharing Demand with Decision Trees and Neural Network
 
-Within this project you can find:
-* Import data scripts
-* Data cleaning and feature extraction
-* Trees generator: Entropy, Information Gain, Information Ratio  
-* ANN training script for random forest
-* Visualization tools: tree explorer, demand evolvement simulator
 
-#### Within this project you can find
+# Contents
   * [Import data scripts](#Import data scripts)
   * [Data cleaning and feature extraction](#Data cleaning and feature extraction)
   * [Trees generator and Random Forest](#Trees generator)
