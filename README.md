@@ -1,5 +1,7 @@
 # Bike Sharing Demand with Decision Trees and Neural Network
 
+The project on GitHub: https://github.com/kfir1g/AI-Project
+
 Within this project you can find:
 * Data import, cleaning and feature extraction
 * Trees generator: Entropy, Information Gain, Information Ratio  
