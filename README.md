@@ -10,11 +10,11 @@ Within this project you can find:
 * Visualization tools: tree explorer, demand evolvement simulator
 
 ## Data import, cleaning and feature extraction
-* `data_processing-final.ipynb`  is a Jupyter notebook that cleans the data and extracts feature to generate the trees with.
 * `get_data.py`  downloading raw data from [Capital Bikeshare](https://www.capitalbikeshare.com/)
 * `get_weather_data.py`  crawl historical weather data for Washington DC area.
+* `clean_data.py`  is the script that cleans the data and extracts feature to generate the trees with.
 
-All data files can be found [here](https://hey.ichhabeeine.cloud/index.php/s/B8LDtGbjpYbgXek) (password: AI)
+All data files can be found [here](https://drive.google.com/drive/folders/1Izq7xP1Z9SsZ2LtPqIdVL7IiRILcL9ex?usp=sharing)
 
 ## Trees generator
 * `tree.py`  includes general implementation of Tree data structure as well as Entropy tree, Information Gain tree and Information Ratio tree representations. Each tree contains a recursive builder, pruning, get_value according to a pandas series (line), saving and loading.
