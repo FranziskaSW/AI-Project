@@ -12,7 +12,7 @@ Within this project you can find:
 ## Data import, cleaning and feature extraction
 * `get_data.py`  downloading raw data from [Capital Bikeshare](https://www.capitalbikeshare.com/)
 * `get_weather_data.py`  crawl historical weather data for Washington DC area.
-* `clean_data.py`  is the script that cleans the data and extracts feature to generate the trees with.
+* `clean_data.py`  is the script that cleans the data and extracts feature to generate the trees with. To run the script download the folder 'data' from the link below and save it in the main folder.
 
 All data files can be found [here](https://drive.google.com/drive/folders/1Izq7xP1Z9SsZ2LtPqIdVL7IiRILcL9ex?usp=sharing)
 
