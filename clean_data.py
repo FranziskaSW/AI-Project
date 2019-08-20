@@ -319,10 +319,6 @@ def demand(pickups, returns, year):
     return results
 
 def combine_all_results(years):
-    path = cwd + '/data/combine'
-    # files = [f for f in listdir(path) if isfile(join(path, f))]
-    # files.sort()
-    # files
     year = years[0]
     data = pd.read_pickle(cwd+'/data/results_' + str(year) + '.pkl')
 
@@ -343,9 +339,9 @@ if __name__ == "__main__":
     years = [2017, 2018, 2019]
 
     print('--------tripdata------')
-    # # data = load_data()
-    # # data.to_pickle(cwd+'/data/tripdata_2015-now.pkl')
-    data = pd.read_pickle(cwd+'/data/tripdata_2015-now.pkl')
+    data = load_data()
+    data.to_pickle(cwd+'/data/tripdata_2017-now.pkl')
+    data = pd.read_pickle(cwd+'/data/tripdata_2017-now.pkl')
 
     print('-------stations--------')
     stations_info, cluster_info = get_stations()
