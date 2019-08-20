@@ -5,7 +5,7 @@ The project on GitHub: https://github.com/kfir1g/AI-Project
 Within this project you can find:
 * Data import, cleaning and feature extraction
 * Trees generator: Entropy, Information Gain, Information Ratio  
-* ANN training script for random forest
+* ANN jupyter notebook for random forest
 * Visualization tools: tree explorer, demand evolvement simulator
 
 ## Data import, cleaning and feature extraction
@@ -20,7 +20,7 @@ All data files can be found [here](https://hey.ichhabeeine.cloud/index.php/s/B8L
 * `create_train_trees.ipynb` and `Create_random_forest.ipynb`  are files for random forest generation.
 
 ## Neural Network for Random Forest
-* `ann.py`  is a neural network architecture and training script for weighting the likelihood of set of trees (a.k.a random forest) 
+* `ANN.ipynb`  is a neural network architecture and training script for weighting the likelihood of set of trees (a.k.a random forest) 
 
 ## Visualization Tools
 
