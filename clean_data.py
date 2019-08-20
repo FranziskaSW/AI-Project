@@ -318,7 +318,29 @@ def demand(pickups, returns, year):
     # results.to_pickle(cwd + '/data/results_' + str(year) + '.pkl')
     return results
 
+def combine_all_results(years):
+    path = cwd + '/data/combine'
+    # files = [f for f in listdir(path) if isfile(join(path, f))]
+    # files.sort()
+    # files
+    year = years[0]
+    data = pd.read_pickle(cwd+'/data/results_' + str(year) + '.pkl')
+
+    for i in range(1,len(years)):
+        year = years[i]
+        print(year)
+        data_new = pd.read_pickle(cwd + '/data/results_' + str(year) + '.pkl')
+        print(data.shape, data_new.shape)
+        data = pd.concat([data, data_new], ignore_index=True)
+
+    print('save file')
+    data.to_csv(cwd + '/data/results_all.csv')
+    data.to_pickle(cwd + '/data/results_all.pkl')
+
+
 if __name__ == "__main__":
+
+    years = [2017, 2018, 2019]
 
     print('--------tripdata------')
     # # data = load_data()
@@ -332,7 +354,7 @@ if __name__ == "__main__":
     weatherdata = load_weatherdata()
     weather_phrases = clean_weatherdata(weatherdata)
 
-    for year in [2017, 2018, 2019]:
+    for year in years:
 
         startdate = datetime(year=year, month=1, day=1, hour=0, minute=0)
         enddate = datetime(year=year+1, month=1, day=1, hour=0, minute=0)
@@ -344,9 +366,11 @@ if __name__ == "__main__":
         tripdata_to_station('returns', startdate, enddate, data, stations_info, cluster_info, weatherdata, weather_phrases)
 
     print('--------demand--------')
-    for year in [2017, 2018, 2019]:
+    for year in years:
         print(year)
         pickups = pd.read_pickle(cwd + '/data/pickups_' + str(year) + '.pkl')
         returns = pd.read_pickle(cwd + '/data/returns_' + str(year) + '.pkl')
         demand(pickups, returns, year)
 
+    print('-------combine results------')
+    combine_all_results(years)
