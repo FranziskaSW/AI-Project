@@ -17,7 +17,8 @@ All data files can be found [here](https://hey.ichhabeeine.cloud/index.php/s/B8L
 
 ## Trees generator
 * `tree.py`  includes general implementation of Tree data structure as well as Entropy tree, Information Gain tree and Information Ratio tree representations. 
-* `create_train_trees.ipynb` and `Create_random_forest.ipynb`  are files for random forest generation.
+* `create_train_trees.ipynb` is a file contains the tree creation, as well as creating a file in the required format for the ANN.
+* `Create_random_forest.ipynb`  Calculate the results of a random forest with uniform distribution over the weights.
 
 ## Neural Network for Random Forest
 * `ANN.ipynb`  is a neural network architecture and training script for weighting the likelihood of set of trees (a.k.a random forest) 
