@@ -3,6 +3,8 @@
 The project is on GitHub: https://github.com/kfir1g/AI-Project
 All of the data are in this drive: https://drive.google.com/open?id=1Izq7xP1Z9SsZ2LtPqIdVL7IiRILcL9ex
 
+**The report of the project can be found [here](https://github.com/FranziskaSW/AI_Bikesharing/blob/master/report.pdf)**
+
 Within this project you can find:
 * Data import, cleaning and feature extraction
 * Trees generator: Entropy, Information Gain, Information Ratio  
